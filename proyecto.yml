@@ -17,12 +17,14 @@ notas: |
   workflows. El PM de acá es la única puerta de entrada y opera sobre todos los repos que se
   clonan adentro (repos:, vacío hasta el onboarding). Rama por defecto master (nunca main), nada
   directo a master: rama auxiliar o worktree, PR, rebase, merge y limpiar rama. Regla propia: los
-  commits van sin trailers Co-authored-by ni atribución a agentes (pisa el trailer de comun.md).
+  commits van sin trailers Co-authored-by ni atribución a agentes.
   Nunca PRs hacia StatIndet. La única puerta a / es pacman vía [omarchy-personal].
 # Archivos propios a mano que pj-template conserva sin tocar.
 extras:
-  - ".agents/grokbot.md"
   - "CLAUDE.md"
   - "HR-CLAVIS.code-workspace"
+  - "docs/agents/issue-tracker.md"
+  - "docs/agents/triage-labels.md"
+  - "docs/agents/domain.md"
 # Skills extra por rol, además de plantillas/roles.yml de pj-template.
 skills_extra: {}

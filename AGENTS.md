@@ -5,10 +5,10 @@ Home repo y meta-repo del trío PM/WK/RV del **ecosistema PJ-CLAVIS** para Curso
 ## Qué hay acá
 - `proyecto.yml`: los datos del proyecto (repos, specs en orden, notas, extras). Lo llenás vos; lo valida el esquema de pj-template.
 - Todo lo demás (reglas, fichas, plantillas, skills, scripts) lo trae `./pj` desde `robert-flo/pj-template` al SHA de `template_ref`, en `.pj/`, y genera `.agents/` y `.cursor/`. Nada de eso se versiona ni se edita a mano. Cómo funciona: `.pj/tpl/docs/pj-template.md`.
-- Extras conservados a mano (`extras:` de `proyecto.yml`): un adaptador propio en `.agents/` (aparte, no se toca), `CLAUDE.md` y `HR-CLAVIS.code-workspace`.
+- Extras conservados a mano (`extras:` de `proyecto.yml`): `CLAUDE.md`, `HR-CLAVIS.code-workspace` y `docs/agents/` (configuración de las skills de ingeniería).
 - `.trio/`: handoffs de `pj-trio` (`.trio/<ticket>/`), se commitean.
 - Regla de merge: el PM solo mergea cuando Roberto lo ordena sobre un PR con `ready-to-merge`.
-- Regla propia de este repo: los commits van **sin** trailers `Co-authored-by` ni atribución a agentes (ver Reglas Globales). Choca con el trailer `agente: … · plataforma: …` de `.agents/reglas/comun.md`; acá manda la regla de este repo.
+- Los commits van sin trailers ni atribución a agentes (ver Reglas Globales).
 
 ## Arquitectura
 | Carpeta | Repo | Rama base | Rol |
@@ -16,6 +16,22 @@ Home repo y meta-repo del trío PM/WK/RV del **ecosistema PJ-CLAVIS** para Curso
 | `.` | `robert-flo/HR-CLAVIS` | `master` | Home repo: punto único de entrada del trío. |
 
 Los repos que supervisa el trío se suman en el onboarding del PM (`repos:` de `proyecto.yml`, hoy vacío) y se agregan a esta tabla. `./pj clonar` los clona adentro (ignorados por git). Tras clonar este repo: `./pj listo` (o `./pj listo --abrir`); instala hooks para que cada `git pull` regenere solo. Después: `agy --agent PM-HR-CLAVIS`, o abrí la carpeta en Cursor.
+
+---
+
+## Agent skills
+
+### Issue tracker
+
+Los issues y specs viven en GitHub Issues de `robert-flo/HR-CLAVIS` (CLI `gh`). See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+Vocabulario por defecto: `needs-triage`, `needs-info`, `ready-for-agent`, `ready-to-merge` (rol ready-for-human), `wontfix`. See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Single-context: un `GLOSSARY.md` y `docs/adr/` en la raíz, creados cuando hagan falta. See `docs/agents/domain.md`.
 
 ---
 

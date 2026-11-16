@@ -1,6 +1,43 @@
-# PJ-CLAVIS — Home Repo
+# AGENTS.md — HR-CLAVIS
 
-Este es el **Home Repo** del ecosistema **PJ-CLAVIS** (siguiendo el [Home Repo Pattern](https://www.aihero.dev/the-home-repo-pattern)).
+Home repo y meta-repo del trío PM/WK/RV del **ecosistema PJ-CLAVIS** para Cursor y agy. Si sos un agente: si no existe `.agents/reglas/`, corré `./pj` antes de nada.
+
+## Qué hay acá
+- `proyecto.yml`: los datos del proyecto (repos, specs en orden, notas, extras). Lo llenás vos; lo valida el esquema de pj-template.
+- Todo lo demás (reglas, fichas, plantillas, skills, scripts) lo trae `./pj` desde `robert-flo/pj-template` al SHA de `template_ref`, en `.pj/`, y genera `.agents/` y `.cursor/`. Nada de eso se versiona ni se edita a mano. Cómo funciona: `.pj/tpl/docs/pj-template.md`.
+- Extras conservados a mano (`extras:` de `proyecto.yml`): `CLAUDE.md`, `HR-CLAVIS.code-workspace` y `docs/agents/` (configuración de las skills de ingeniería).
+- `.trio/`: handoffs de `pj-trio` (`.trio/<ticket>/`), se commitean.
+- Regla de merge: el PM mergea tras el `APRUEBO <sha>` del RV, con squash, `--delete-branch` y `--match-head-commit`, sin esperar la orden de Roberto ([ADR 0014](https://github.com/robert-flo/pj-template/blob/main/docs/adr/0014-el-pm-mergea-tras-apruebo.md)).
+- Los commits van sin trailers ni atribución a agentes (ver Reglas Globales).
+
+## Arquitectura
+| Carpeta | Repo | Rama base | Rol |
+| :--- | :--- | :--- | :--- |
+| `.` | `robert-flo/HR-CLAVIS` | `master` | Home repo: punto único de entrada del trío. |
+
+Los repos que supervisa el trío se suman en el onboarding del PM (`repos:` de `proyecto.yml`, hoy vacío) y se agregan a esta tabla. `./pj clonar` los clona adentro (ignorados por git). Tras clonar este repo: `./pj listo` (o `./pj listo --abrir`); instala hooks para que cada `git pull` regenere solo. Después: `agy --agent PM-HR-CLAVIS`, o abrí la carpeta en Cursor.
+
+---
+
+## Agent skills
+
+### Issue tracker
+
+Los issues y specs viven en GitHub Issues de `robert-flo/HR-CLAVIS` (CLI `gh`). See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+Vocabulario por defecto: `needs-triage`, `needs-info`, `ready-for-agent`, `ready-to-merge` (rol ready-for-human), `wontfix`. See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Single-context: un `GLOSSARY.md` y `docs/adr/` en la raíz, creados cuando hagan falta. See `docs/agents/domain.md`.
+
+---
+
+## Home Repo
+
+Este es el **Home Repo** (`robert-flo/HR-CLAVIS`, antes PJ-CLAVIS) del ecosistema **PJ-CLAVIS** (siguiendo el [Home Repo Pattern](https://www.aihero.dev/the-home-repo-pattern)).
 Desde aquí se inician las sesiones de agentes de desarrollo IA (`MonoCode`, `T3 Code`, `herdr`, `Claude Code`, `Codex`, `Antigravity`) para orquestar cambios multi-repositorio con una única fuente de contexto, reglas y skills compartidas.
 
 ---

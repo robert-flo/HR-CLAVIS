@@ -7,7 +7,7 @@ Home repo y meta-repo del trío PM/WK/RV del **ecosistema PJ-CLAVIS** para Curso
 - Todo lo demás (reglas, fichas, plantillas, skills, scripts) lo trae `./pj` desde `robert-flo/pj-template` al SHA de `template_ref`, en `.pj/`, y genera `.agents/` y `.cursor/`. Nada de eso se versiona ni se edita a mano. Cómo funciona: `.pj/tpl/docs/pj-template.md`.
 - Extras conservados a mano (`extras:` de `proyecto.yml`): `CLAUDE.md`, `HR-CLAVIS.code-workspace` y `docs/agents/` (configuración de las skills de ingeniería).
 - `.trio/`: handoffs de `pj-trio` (`.trio/<ticket>/`), se commitean.
-- Regla de merge: el PM mergea tras el `APRUEBO <sha>` del RV, con squash, `--delete-branch` y `--match-head-commit`, sin esperar la orden de Roberto (ADR 0014).
+- Regla de merge: el PM mergea tras el `APRUEBO <sha>` del RV, con squash, `--delete-branch` y `--match-head-commit`, sin esperar la orden de Roberto ([ADR 0014](https://github.com/robert-flo/pj-template/blob/main/docs/adr/0014-el-pm-mergea-tras-apruebo.md)).
 - Los commits van sin trailers ni atribución a agentes (ver Reglas Globales).
 
 ## Arquitectura

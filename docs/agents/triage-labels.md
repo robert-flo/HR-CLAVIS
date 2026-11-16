@@ -7,7 +7,7 @@ The skills speak in terms of five canonical triage roles. This file maps those r
 | `needs-triage`             | `needs-triage`       | Maintainer needs to evaluate this issue  |
 | `needs-info`               | `needs-info`         | Waiting on reporter for more information |
 | `ready-for-agent`          | `ready-for-agent`    | Fully specified, ready for an AFK agent  |
-| `ready-for-human`          | `ready-to-merge`     | Ready for a human: implement the issue, or merge the PR |
+| `ready-for-human`          | `ready-to-merge`     | PR with the RV's `APRUEBO` on the exact head; the PM merges ([ADR 0014](https://github.com/robert-flo/pj-template/blob/main/docs/adr/0014-el-pm-mergea-tras-apruebo.md)) |
 | `wontfix`                  | `wontfix`            | Will not be actioned                     |
 
 When a skill mentions a role (e.g. "apply the AFK-ready triage label"), use the corresponding label string from this table.

@@ -1,0 +1,19 @@
+# Datos del proyecto. Es el único archivo de datos que llenás a mano; después: ./pj
+# Lo valida schema/proyecto.schema.json de pj-template. Los textos van entre comillas (un # sin comillas corta el valor).
+proyecto: "HR-CLAVIS"          # nombre del trío: PM-<proyecto>, WK-<proyecto>, RV-<proyecto>
+area: "Home Repo del ecosistema PJ-CLAVIS"
+rama_base: "master"            # rama de los PR finales
+template_ref: "96863b160fc8b1a1d328ca383a86753658f668e3"   # SHA de robert-flo/pj-template; lo sube el PR de sync
+# Repos hijos (vacío en proyectos de un solo repo). dir = carpeta local, ignorada en .gitignore.
+# HR-CLAVIS trabaja sobre sí mismo; los demás repos del ecosistema están como punteros en AGENTS.md.
+repos: []
+# Specs en curso: ref = dueño/repo#N, orden entero, exactamente uno con primero: true.
+specs: []
+notas: |
+  Home Repo del ecosistema PJ-CLAVIS (workstation, dotfiles, forkhub, workflows). El tablero son
+  los GitHub Issues de robert-flo/HR-CLAVIS y la rama base es master. Regla propia de este repo:
+  los commits van sin trailers Co-authored-by ni atribución a agentes (pisa el trailer de comun.md).
+extras:
+  - "CLAUDE.md"
+# Skills extra por rol, además de plantillas/roles.yml de pj-template.
+skills_extra: {}

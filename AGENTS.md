@@ -1,7 +1,28 @@
-# PJ-CLAVIS — Home Repo
+# HR-CLAVIS — Home Repo
 
-Este es el **Home Repo** del ecosistema **PJ-CLAVIS** (siguiendo el [Home Repo Pattern](https://www.aihero.dev/the-home-repo-pattern)).
+Este es el **Home Repo** (`robert-flo/HR-CLAVIS`, antes PJ-CLAVIS) del ecosistema **PJ-CLAVIS** (siguiendo el [Home Repo Pattern](https://www.aihero.dev/the-home-repo-pattern)).
 Desde aquí se inician las sesiones de agentes de desarrollo IA (`MonoCode`, `T3 Code`, `herdr`, `Claude Code`, `Codex`, `Antigravity`) para orquestar cambios multi-repositorio con una única fuente de contexto, reglas y skills compartidas.
+
+---
+
+## Trío PM/WK/RV (agy y Cursor)
+
+Este repo también es meta-repo del trío **PM/WK/RV-HR-CLAVIS**, hijo de `robert-flo/pj-template` en modo dependencia. **Si sos un agente: si no existe `.agents/reglas/`, corré `./pj` antes de nada.**
+
+- `proyecto.yml`: datos del trío (área, rama base `master`, specs). Lo llena Roberto.
+- Todo lo demás (reglas, plantillas, skills, scripts) lo trae `./pj` desde `robert-flo/pj-template` al SHA de `template_ref`, en `.pj/`, y genera `.agents/` (fichas, reglas, skills) y `.cursor/`. Nada de eso se versiona ni se edita a mano; `.agents/` y `.cursor/` están en `.gitignore`.
+- Extra propio que `./pj` no toca: `CLAUDE.md`.
+- `.trio/`: handoffs de `pj-trio` (`.trio/<ticket>/`), se commitean.
+- Tablero: GitHub Issues de `robert-flo/HR-CLAVIS`.
+
+Cómo abrir el trío:
+- **Después de clonar o hacer pull:** `./pj listo` (pull, template, genera, hooks, enlaza en agy, check).
+- **agy:** `./pj agy` una vez por máquina y después `agy --agent PM-HR-CLAVIS` desde la raíz del repo.
+- **Cursor (IDE o `cursor-agent`):** abrí la carpeta del repo; la regla del PM está en `.cursor/rules/` y WK/RV en `.cursor/agents/`. Roberto habla solo con el PM.
+- **herdr:** `pj-trio HR-CLAVIS <ticket>`.
+- `./pj check` tiene que pasar antes de cada PR.
+
+Regla propia de este repo: los commits van **sin** trailers `Co-authored-by` ni atribución a agentes (ver Reglas Globales). Esto choca con el trailer `agente: … · plataforma: …` de `.agents/reglas/comun.md`; acá manda la regla de este repo.
 
 ---
 

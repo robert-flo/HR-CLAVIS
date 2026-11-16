@@ -1,6 +1,27 @@
-# PJ-CLAVIS — Home Repo
+# AGENTS.md — HR-CLAVIS
 
-Este es el **Home Repo** del ecosistema **PJ-CLAVIS** (siguiendo el [Home Repo Pattern](https://www.aihero.dev/the-home-repo-pattern)).
+Home repo y meta-repo del trío PM/WK/RV del **ecosistema PJ-CLAVIS** para Cursor y agy. Si sos un agente: si no existe `.agents/reglas/`, corré `./pj` antes de nada.
+
+## Qué hay acá
+- `proyecto.yml`: los datos del proyecto (repos, specs en orden, notas, extras). Lo llenás vos; lo valida el esquema de pj-template.
+- Todo lo demás (reglas, fichas, plantillas, skills, scripts) lo trae `./pj` desde `robert-flo/pj-template` al SHA de `template_ref`, en `.pj/`, y genera `.agents/` y `.cursor/`. Nada de eso se versiona ni se edita a mano. Cómo funciona: `.pj/tpl/docs/pj-template.md`.
+- Extras conservados a mano (`extras:` de `proyecto.yml`): un adaptador propio en `.agents/` (aparte, no se toca), `CLAUDE.md` y `HR-CLAVIS.code-workspace`.
+- `.trio/`: handoffs de `pj-trio` (`.trio/<ticket>/`), se commitean.
+- Regla de merge: el PM solo mergea cuando Roberto lo ordena sobre un PR con `ready-to-merge`.
+- Regla propia de este repo: los commits van **sin** trailers `Co-authored-by` ni atribución a agentes (ver Reglas Globales). Choca con el trailer `agente: … · plataforma: …` de `.agents/reglas/comun.md`; acá manda la regla de este repo.
+
+## Arquitectura
+| Carpeta | Repo | Rama base | Rol |
+| :--- | :--- | :--- | :--- |
+| `.` | `robert-flo/HR-CLAVIS` | `master` | Home repo: punto único de entrada del trío. |
+
+Los repos que supervisa el trío se suman en el onboarding del PM (`repos:` de `proyecto.yml`, hoy vacío) y se agregan a esta tabla. `./pj clonar` los clona adentro (ignorados por git). Tras clonar este repo: `./pj listo` (o `./pj listo --abrir`); instala hooks para que cada `git pull` regenere solo. Después: `agy --agent PM-HR-CLAVIS`, o abrí la carpeta en Cursor.
+
+---
+
+## Home Repo
+
+Este es el **Home Repo** (`robert-flo/HR-CLAVIS`, antes PJ-CLAVIS) del ecosistema **PJ-CLAVIS** (siguiendo el [Home Repo Pattern](https://www.aihero.dev/the-home-repo-pattern)).
 Desde aquí se inician las sesiones de agentes de desarrollo IA (`MonoCode`, `T3 Code`, `herdr`, `Claude Code`, `Codex`, `Antigravity`) para orquestar cambios multi-repositorio con una única fuente de contexto, reglas y skills compartidas.
 
 ---

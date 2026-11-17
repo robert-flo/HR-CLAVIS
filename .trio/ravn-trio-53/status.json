@@ -2,6 +2,7 @@
   "ticket": "ravn-trio-53",
   "estado": "en-curso",
   "paso": "wk",
-  "error": "",
-  "timestamp": "2026-11-17T14:56:03-06:00"
+  "error": "wk quedó idle sin wk.md (error 401 unauthenticated en agy)",
+  "timestamp": "2026-11-17T15:08:15-06:00",
+  "intentos": 2
 }

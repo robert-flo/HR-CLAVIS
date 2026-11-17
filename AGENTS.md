@@ -44,8 +44,16 @@ robert-flo/pj-template @ template_ref        (reglas, fichas, skills, scripts, M
 ├── .cursor/        ← adaptadores de Cursor  (generado, ignorado)
 ├── .trio/          ← handoffs de pj-trio    (versionado)
 ├── PJ-NIRI-rf-omarchy-workstation/   ← clon de un repo hijo (ignorado)
-├── rf-dotfiles/                       ← clon de un repo hijo (ignorado)
-└── <clon>-wt-<n>-<AAAAMMDDhhmmss>/    ← worktree del WK, hermano del clon (ignorado)
+└── rf-dotfiles/                       ← clon de un repo hijo (ignorado)
+```
+
+Los clones de arriba son **para leer** (el PM y el contexto de los agentes). Nadie trabaja en ellos: todo worktree de trabajo sale de `ravn-git-bare-clone` (§6.4, ADR 0019 de pj-template):
+
+```
+/z/bare/<repo>.git                 ← bare (ravn-git-bare-clone clone <dueño>/<repo>)
+/z/repos/<repo>/                   ← raíz de worktrees (.git apunta al bare; la rama por defecto queda libre)
+/z/repos/<repo>/<n>-<slug>/        ← worktree del WK, rama issue/<n>-<slug>
+/z/repos/<repo>/rv-<pr>/           ← worktree del RV para probar un PR (rama local rv/<pr>, sin subir)
 ```
 
 - **Tres capas.** pj-template es el molde (reglas y herramientas comunes a todos los Home Repos). HR-CLAVIS pone los datos del proyecto. Cada repo hijo pone su código y sus reglas propias.
@@ -176,9 +184,10 @@ HR-CLAVIS **no tiene Makefile propio**: los targets son del `Makefile` de pj-tem
 pj-trio /z-home-repos/HR-CLAVIS <ticket> --repo <dir del repo hijo> [--base <rama del spec>]
 ```
 
-  - Pasale la **ruta** del Home Repo: `pj-trio` busca los proyectos por nombre solo en `$PJ_TRIO_ROOTS` (por defecto `/z-drive/tries`) y no conoce `/z-home-repos`. Con el nombre a secas clona otra copia. También sirve `PJ_TRIO_ROOTS=/z-home-repos`.
+  - Desde `ravn-trio` 0.1.9, `pj-trio HR-CLAVIS …` encuentra el Home Repo por nombre: `$PJ_TRIO_ROOTS` por defecto es `/z-drive/tries /z-home-repos /z/repos`. La ruta completa también sirve.
   - Con `--repo`, el `<ticket>` es un issue **del repo hijo** (`gh issue view <ticket> -R <dueño>/<repo>`), los agentes abren en ese clon y el Home Repo se les suma con `--add-dir`. Sin `--repo`, el ticket es de HR-CLAVIS y el trabajo cae en el Home Repo mismo.
-  - `--base <rama del spec>` para un sub-issue (el worktree sale de `origin/<rama>` y el PR va contra ella). Sin `--base` (trivial) sale de `origin/HEAD`.
+  - `--base <rama del spec>` para un sub-issue: el worktree sale de `origin/<rama>`, el PR va contra ella, no pasa por el RV y lo mergea el WK (§7.3). Sin `--base` (trivial) sale de `origin/HEAD`, lo revisa el RV y lo mergea el PM.
+  - El worktree lo crea el PM con `ravn-git-bare-clone clone <dueño>/<repo>` y `git-create-worktree -r /z/repos/<repo> -B <base> -b issue/<ticket>-<slug> -p '' <ticket>-<slug>` (§6.4).
   - `--dry-run` muestra todo sin aplicarlo; `--print-kickoff` imprime el arranque para pegarlo a mano.
 - **Nombres:** workspace `trio HR-CLAVIS/<miembro>#<ticket>`. Agentes `pm|wk|rv-<miembro corto>-<ticket>` (sin prefijos `rf-`, `fo-`, `pj-domina-`; ≤ 32 caracteres).
 - **Handoff:** `.trio/<clave>/` en el Home Repo, con `<clave>` = `<repo hijo>-<ticket>` (con `--repo`) o `<ticket>`. Lleva `plan.md` (PM), `wk.md` (WK), `rv.md` (RV) y `status.json`. Se commitea en HR-CLAVIS y nunca se duplica en el repo hijo.
@@ -189,13 +198,13 @@ pj-trio /z-home-repos/HR-CLAVIS <ticket> --repo <dir del repo hijo> [--base <ram
 
 - **Qué es:** el que a veces se llama «herd-sesionizer» es `ravn-sessionizer`: un `fzf` para moverte por herdr (workspaces, clones, meta-repos y sus miembros, agentes) y lanzar un trío desde un issue con `pj-trio start <pj> <ticket> --repo <miembro>`. Atajos de bash `rs` (repos) y `ri` (issues → trío); en herdr, `prefix+f`, `prefix+a` y `prefix+t` si los configurás.
 - **Dónde vive:** código en `robert-flo/ravn-sessionizer`, paquete `ravn-sessionizer` desde `robert-flo/ravn-sessionizer-arch` en `[omarchy-personal]`. Es una reimplementación propia, inspirada en `salkhalil/herdr-sessionizer` (del que hay un fork `robert-flo/fo-herdr-sessionizer` registrado en forkhub).
-- **Con HR-CLAVIS hoy no sirve para lanzar tríos:** solo reconoce como proyectos los repos que empiezan con `pj-`, así que HR-CLAVIS cae en «sin pj» y `ri` no lanza nada. Lanzá el trío con `pj-trio` (§6.2).
+- **Con HR-CLAVIS:** desde ravn-sessionizer#19 reconoce como proyectos `pj-*` y `HR-*` (`SES_PJ_REGEX='^(pj|hr)-'`) y busca en `/z-drive/tries`, `/z-home-repos` y `/z/repos`, así que HR-CLAVIS aparece como proyecto y `ri` lanza su trío. Si tu `/etc/ravn/sessionizer.conf` es viejo y lo editaste a mano, pacman deja el nuevo como `.pacnew`: copiá `SES_ROOTS` y `SES_PJ_REGEX` de ahí.
 
 ### 6.4 `ravn-git-bare-clone` y sus atajos (`git-bare-clone`, `git-create-worktree`, `git-issue-worktree`)
 
 - **Qué hace:** clona un repo en modo bare en `$BARE_HOME/<repo>.git` (por defecto `/z/bare`) y arma worktrees en `$WORKTREES_HOME/<repo>/<rama>` (por defecto `/z/repos`), dejando libre la rama por defecto para que varios agentes trabajen en paralelo. `sync` crea los worktrees que falten; `create <nombre>` y `issue <n> <slug>` crean un worktree nuevo. `git-bare-clone`, `git-create-worktree` y `git-issue-worktree` son atajos de compatibilidad.
 - **Dónde vive:** `robert-flo/ravn-git-bare-clone`, paquete `ravn-git-bare-clone` en `[omarchy-personal]` (`/opt/ravn-git-bare-clone`, comandos en `/usr/bin`). Hay versiones viejas de los mismos scripts en `robert-flo/pj-domina-rf-tools/bin/` (las instala su `install.sh` en `~/bin`) y en repos archivados.
-- **Con HR-CLAVIS:** **no se usa.** `./pj clonar` clona con `gh repo clone` dentro del Home Repo, y el worktree del WK sale de `git worktree add` según ravn-trio (§7.3). `/z/bare` y `/z/repos` son la topología de la workstation para trabajo fuera del trío (08.3).
+- **Con HR-CLAVIS:** **es la única forma de crear worktrees** (ADR 0019 de pj-template; fleet ADR 0011: nunca `git worktree` a mano). `ravn-git-bare-clone clone <dueño>/<repo>` es idempotente y prepara `/z/bare/<repo>.git` y `/z/repos/<repo>/`. Si el issue vive en el repo del código, `git-issue-worktree -r /z/repos/<repo> -B <base> <n> <slug>`; si vive en HR-CLAVIS, `git-create-worktree -r /z/repos/<repo> -B <base> -b issue/<n>-<slug> -p '' <n>-<slug>`. Los dos dejan `/z/repos/<repo>/<n>-<slug>` en la rama `issue/<n>-<slug>`. Al terminar, `git -C /z/repos/<repo> worktree remove <ruta>`. `./pj clonar` sigue clonando con `gh repo clone` dentro del Home Repo, pero esos clones son para leer. `./pj clean` nunca toca `/z/bare` ni `/z/repos`.
 
 ### 6.5 Las demás
 
@@ -248,21 +257,21 @@ flowchart TD
 ```
 
 - **Rama del spec** (ADR 0006 de pj-template): `<número>-<slug>`, la crea el PM desde la rama por defecto al publicar el spec, sin commits suyos. Los PRs del WK van a ella; su único PR final va a `master`.
-- **Worktree del WK** (convención de ravn-trio, `wk.md` paso 3): uno nuevo por issue, siempre, hermano del clon:
-  `git worktree add -b feat/<número>-<slug> <clon>-wt-<número>-<AAAAMMDDhhmmss> <base>`.
-  `<base>` es la rama del spec en un sub-issue y `origin/HEAD` en un trivial. En herdr lo crea el PM. Al terminar, `git worktree remove`, y el clon principal queda limpio en su rama por defecto.
+- **Worktree del WK** (`wk.md` paso 3, ADR 0019 de pj-template): uno nuevo por issue, siempre, con `ravn-git-bare-clone` (§6.4) en `/z/repos/<repo>/<n>-<slug>`, rama `issue/<n>-<slug>`. `<base>` es `origin/<rama del spec>` en un sub-issue y `origin/HEAD` en un trivial. En herdr lo crea el PM. Al terminar, `git -C /z/repos/<repo> worktree remove <ruta>`. Nunca `git worktree add` a mano ni trabajo en los clones del Home Repo.
 - **PR:** body con la skill `pr` (`## Summary`, `## Evidence`, `## Merge Danger`), como draft hasta que CI esté verde y `code-review` limpio. Las capturas van a `robert-flo/assets`, nunca commiteadas en el repo.
-- **RV:** prueba el PR de verdad en un worktree y comenta en el PR `APRUEBO <sha>` o `BLOQUEO` con archivo y línea. No programa, no mergea, no cambia etiquetas.
-- **Merge** (ADR 0014 de pj-template): a la rama por defecto mergea **solo el PM**, solo tras el `APRUEBO <sha>` del RV y sobre ese head exacto:
-  `gh pr merge <N> --squash --delete-branch --match-head-commit <sha>`.
-  Si el head cambió después del `APRUEBO`, no se mergea y se pide otra revisión. No hace falta orden de Roberto.
+- **RV:** prueba el PR de verdad en un worktree `/z/repos/<repo>/rv-<pr>` (`git-create-worktree -N -r /z/repos/<repo> -B origin/<rama-del-PR> -b rv/<pr> -p '' rv-<pr>`) y comenta en el PR `APRUEBO <sha>` o `BLOQUEO` con archivo y línea. No programa, no mergea, no cambia etiquetas.
+- **Merge** (ADR 0018 de pj-template = la regla de los tríos de fleet, igual en todas las plataformas; no hay otra):
+  - **Sub-issue → rama del spec:** lo mergea el **WK**, con CI verde y `code-review` limpio, sin RV (fleet ADR 0011: «merges its own PR into the spec branch when everything passes»).
+  - **PR final (rama del spec → `master`) y trivial:** lo revisa el RV y lo mergea el **PM**, solo tras el `APRUEBO <sha>` sobre ese head exacto, sin orden de Roberto (fleet `CIRCUITO.md` C6: «Con `APRUEBO` sobre el head exacto, el PM mergea con `gh pr merge --squash --delete-branch --match-head-commit`. Si el head se movió, vuelve a revisión.»; C9; ADR 0014 de pj-template):
+    `gh pr merge <N> --squash --delete-branch --match-head-commit <sha>`.
+  - **El RV nunca mergea** (fleet `templates/ficha-reviewer.md`: «no mergeás, no cerrás PRs»). El WK nunca mergea a `master`.
 - **Hecho:** issue cerrado por el merge y sin etiquetas de triage; ramas y worktrees borrados.
 - **El PR de sync** (`pj-template/sync-*`, lo abre la CI) es un PR más: pasa por el RV y lo mergea el PM.
 - **Etiquetas** (`schema/etiquetas.tsv` de pj-template; la CI las crea en cada sync): `needs-triage`, `needs-info` (con `ON HOLD: <motivo>`), `spec`, `ready-for-agent`, `ready-to-merge`, `wontfix`.
 
 ### 7.4 En herdr
 
-Con `pj-trio` (§6.2) el circuito es el mismo, por ticket. El PM escribe `plan.md`, crea el worktree, le manda el trabajo al WK y espera `wk.md`. Después le pasa la revisión al RV y espera `rv.md` con `APRUEBO <sha>` o `BLOQUEO`. Con el `APRUEBO`, mergea y cierra: `status.json` en `hecho`, commit y push de `.trio/`, `worktree remove`. Un paso que falla se reintenta **una** vez; al segundo fallo queda `needs-roberto` con aviso por `notify-send`.
+Con `pj-trio` (§6.2) el circuito es el mismo, por ticket. El PM escribe `plan.md`, crea el worktree con `ravn-git-bare-clone`, le manda el trabajo al WK y espera `wk.md`. Después le pasa la revisión al RV y espera `rv.md` con `APRUEBO <sha>` o `BLOQUEO`. Con el `APRUEBO`, mergea y cierra: `status.json` en `hecho`, commit y push de `.trio/`, `git -C /z/repos/<repo> worktree remove`. Con `--base` (sub-issue) no hay paso RV: el WK mergea su PR a la rama del spec y el PM lo confirma en GitHub y cierra. Un paso que falla se reintenta **una** vez; al segundo fallo queda `needs-roberto` con aviso por `notify-send`.
 
 ## 8. Reglas duras
 

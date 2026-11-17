@@ -3,7 +3,7 @@
 proyecto: "HR-CLAVIS"           # nombre del trío: PM-<proyecto>, WK-<proyecto>, RV-<proyecto>
 area: "home repo del ecosistema PJ-CLAVIS — punto único de entrada del trío a todos sus repos"
 rama_base: "master"             # rama de los PR finales
-template_ref: "68c470cc4f90bac4b6e429308d2796227fdf3bc7"   # SHA de robert-flo/pj-template; lo sube el PR de sync
+template_ref: "059c905cee4a03a01f191c5fbc0488847971f6ff"   # SHA de robert-flo/pj-template; lo sube el PR de sync
 # Repos hijos. dir = carpeta local, ignorada en .gitignore. Se llenan en el onboarding del PM.
 repos:
   - dir: "PJ-NIRI-rf-omarchy-workstation"

@@ -1,7 +1,10 @@
 {
   "ticket": "ravn-trio-35",
-  "estado": "en-curso",
-  "paso": "plan",
+  "estado": "needs-roberto",
+  "paso": "merge",
   "error": "",
-  "timestamp": "2026-11-17T08:26:53-06:00"
+  "timestamp": "2026-11-17T08:34:56-06:00",
+  "pr": "https://github.com/robert-flo/ravn-trio/pull/36",
+  "head": "1021849524223e057723401440979f9ed78bde60",
+  "merge_danger": "two-way / High"
 }

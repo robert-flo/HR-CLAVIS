@@ -1,24 +1,313 @@
 # AGENTS.md — HR-CLAVIS
 
-Home repo y meta-repo del trío PM/WK/RV del **ecosistema PJ-CLAVIS** para Cursor y agy. Si sos un agente: si no existe `.agents/reglas/`, corré `./pj` antes de nada.
+Este archivo es el **mapa** de HR-CLAVIS para cualquier agente, en cualquier plataforma (agy, Cursor IDE o CLI, Claude Code vía `CLAUDE.md`). Dice por qué existe el repo, cómo está armado, qué supervisa, qué herramientas usa y cómo se opera. **No es el reglamento:** las reglas de cada rol viven en `.agents/reglas/` (las trae `./pj` desde pj-template) y acá solo se enlazan. Si algo de este mapa choca con el dueño de esa verdad (§9), manda el dueño y este archivo se corrige por PR.
 
-## Qué hay acá
-- `proyecto.yml`: los datos del proyecto (repos, specs en orden, notas, extras). Lo llenás vos; lo valida el esquema de pj-template.
-- `onboarding.yml`: lo propio del proyecto para el PM, el WK y el RV (misión, lo que no tocan, reglas, primeros pasos, cómo prueba el WK, qué exige el RV). Lo escribe `./pj onboard`; para cambiarlo, `./pj onboard` otra vez (muestra lo que hay y pregunta qué cambiar).
-- Todo lo demás (reglas, fichas, plantillas, skills, scripts) lo trae `./pj` desde `robert-flo/pj-template` al SHA de `template_ref`, en `.pj/`, y genera `.agents/` y `.cursor/`. Nada de eso se versiona ni se edita a mano. Cómo funciona: `.pj/tpl/docs/pj-template.md`.
-- Extras conservados a mano (`extras:` de `proyecto.yml`): `CLAUDE.md`, `HR-CLAVIS.code-workspace` y `docs/agents/` (configuración de las skills de ingeniería).
-- `.trio/`: handoffs de `pj-trio` (`.trio/<ticket>/`), se commitean.
-- Regla de merge: el PM mergea tras el `APRUEBO <sha>` del RV, con squash, `--delete-branch` y `--match-head-commit`, sin esperar la orden de Roberto ([ADR 0014](https://github.com/robert-flo/pj-template/blob/main/docs/adr/0014-el-pm-mergea-tras-apruebo.md)).
-- Los commits van sin trailers ni atribución a agentes (ver Reglas Globales).
+> Las secciones marcadas **[HR-CLAVIS]** son propias de este proyecto. El resto es genérico de cualquier Home Repo hijo de pj-template (cambiá `HR-CLAVIS` por `<proyecto>`).
 
-## Arquitectura
-| Carpeta | Repo | Rama base | Rol |
-| :--- | :--- | :--- | :--- |
-| `.` | `robert-flo/HR-CLAVIS` | `master` | Home repo: punto único de entrada del trío. |
-| `PJ-NIRI-rf-omarchy-workstation/` | `robert-flo/PJ-NIRI-rf-omarchy-workstation` | `master` | workstation: vault de arquitectura, ADRs, workflows y proyectos (forkhub vive ahí hasta extraerse). |
-| `rf-dotfiles/` | `robert-flo/rf-dotfiles` | `master` | dotfiles: chezmoi SSoT y `packages.json`. |
+## 0. Si sos un agente, empezá acá
 
-Los repos que supervisa el trío salen del onboarding del PM (`repos:` de `proyecto.yml`, `./pj onboard`). `./pj clonar` los clona adentro (ignorados por git). Tras clonar este repo: `./pj listo` (o `./pj listo --abrir`); instala hooks para que cada `git pull` regenere solo. Después: `agy --agent PM-HR-CLAVIS`, o abrí la carpeta en Cursor. Para repetir todo desde cero: `./pj clean` (`--onboarding` rehace también la entrevista).
+1. ¿Existe `.agents/reglas/`? Si no, corré `./pj listo` antes de nada (sin eso no hay fichas, ni reglas, ni skills, ni repos clonados).
+2. Leé tu ficha (`.agents/agents/<ROL>-HR-CLAVIS.md`; en Cursor, `.cursor/rules/pm-hr-clavis.mdc` o `.cursor/agents/{wk,rv}-hr-clavis.md`). Ella te manda a leer `logs.md`, `comun.md` y la regla de tu rol, y nada más.
+3. Leé este archivo para ubicarte: arquitectura (§2), repos (§3), herramientas (§6) y circuito (§7).
+4. Antes de tocar un repo hijo, leé **su** `AGENTS.md` (§3).
+5. Si no sabés algo, buscalo en el dueño (§9). Nunca inventés una regla, una ruta ni un comando: si no está escrito, preguntale a Roberto (vía el PM).
+
+---
+
+## 1. Qué es y por qué existe
+
+HR-CLAVIS es el **Home Repo** del ecosistema PJ-CLAVIS, según el [Home Repo Pattern](https://www.aihero.dev/the-home-repo-pattern): un solo repo que guarda el `AGENTS.md`, las skills y los documentos compartidos, y que **apunta** a los demás repos. Las sesiones de agente arrancan acá, no dentro de un repo suelto.
+
+**El problema que resuelve.** Un agente abierto dentro de un repo solo ve ese repo: cada repo termina con su propia copia de skills y reglas, y un cambio que cruza repos se planea sin la foto completa. Eso es justo lo que pasaba con workstation y dotfiles: retazos de reglas en cada lado y cada agente inventando cómo trabajar.
+
+**Lo que da el patrón:**
+- un solo lugar para las reglas, las skills y las herramientas;
+- un solo lugar donde corren los agentes;
+- cambios que cruzan varios repos desde una misma sesión, con un solo tablero.
+
+**Cómo lo adaptamos:**
+- **Un trío fijo** vive acá: `PM-HR-CLAVIS`, `WK-HR-CLAVIS` y `RV-HR-CLAVIS`. **Roberto solo habla con el PM**, que es la única puerta de entrada a todos los repos del proyecto.
+- **La mentalidad del PM** es la del patrón: mira todos los repos juntos, junta los hechos solo (filesystem, git, `gh`) y le trae a Roberto **decisiones**, no preguntas que podía contestar leyendo. No programa: convierte pedidos en specs y tickets y los sigue hasta el merge.
+- **Los repos hijos se clonan adentro** del Home Repo y quedan ignorados por git (la variante «clonarlos adentro y gitignorearlos» del patrón). El código, la historia, los issues propios y el `AGENTS.md` de cada repo se quedan en su repo.
+- **Las reglas y las skills no se copian a mano:** HR-CLAVIS es un **hijo de `robert-flo/pj-template` en modo dependencia**. Versiona solo sus datos (`proyecto.yml`, `onboarding.yml`) y unos pocos archivos a mano. Todo lo demás lo trae `./pj` al SHA fijo de `template_ref`.
+
+## 2. Arquitectura
+
+```text
+robert-flo/pj-template @ template_ref        (reglas, fichas, skills, scripts, Makefile)
+        │  ./pj lo baja a .pj/tpl y genera
+        ▼
+/z-home-repos/HR-CLAVIS/                     (este repo, rama master)
+├── proyecto.yml, onboarding.yml, AGENTS.md… (lo versionado: §5)
+├── .pj/            ← template + venv        (generado, ignorado)
+├── .agents/        ← fichas agy, reglas, skills (generado, ignorado)
+├── .cursor/        ← adaptadores de Cursor  (generado, ignorado)
+├── .trio/          ← handoffs de pj-trio    (versionado)
+├── PJ-NIRI-rf-omarchy-workstation/   ← clon de un repo hijo (ignorado)
+├── rf-dotfiles/                       ← clon de un repo hijo (ignorado)
+└── <clon>-wt-<n>-<AAAAMMDDhhmmss>/    ← worktree del WK, hermano del clon (ignorado)
+```
+
+- **Tres capas.** pj-template es el molde (reglas y herramientas comunes a todos los Home Repos). HR-CLAVIS pone los datos del proyecto. Cada repo hijo pone su código y sus reglas propias.
+- **Por qué lo generado no se versiona.** agy y Cursor leen `.agents/` y `.cursor/` del disco, pero las fichas citan reglas y skills que tampoco estarían al clonar: versionar solo las fichas daría un clon a medias. `./pj` lo deja todo en disco, igual byte a byte en cualquier máquina porque sale de un SHA fijo. Así el diff de un PR de acá es solo lo que escribió alguien, y actualizar el template es cambiar una línea (`template_ref`). Consecuencia: **en GitHub no se ven los agentes, y está bien.**
+- **Dónde vive el clon** (en la PC de Roberto): `/z-home-repos/HR-CLAVIS`, rama `master`. Los repos hijos, adentro, en la carpeta `dir` de `proyecto.yml`.
+- **Cada plataforma ve el mismo trío:**
+
+| Plataforma | PM | WK y RV | Cómo se arranca |
+| --- | --- | --- | --- |
+| agy | `.agents/agents/PM-HR-CLAVIS.md` (enlazado en `~/.gemini/config/agents`) | `WK-`/`RV-HR-CLAVIS.md`; el PM los lanza con `invoke_subagent` | `agy --agent PM-HR-CLAVIS` desde la raíz |
+| Cursor (IDE o CLI) | regla `alwaysApply` `.cursor/rules/pm-hr-clavis.mdc`: el chat **es** el PM | subagentes `.cursor/agents/{wk,rv}-hr-clavis.md` | abrí `HR-CLAVIS.code-workspace` o corré `cursor-agent` en la raíz |
+| herdr (`pj-trio`) | pestaña `pm` con agy | pestañas `wk` y `rv` | `pj-trio … <ticket>` (§6.2) |
+| Claude Code | `CLAUDE.md` importa este archivo | — | no tiene fichas propias; leé las de `.agents/agents/` |
+
+## 3. Los repos que supervisa [HR-CLAVIS]
+
+La lista canónica es `repos:` de `proyecto.yml` (la llena `./pj onboard`); `./pj clonar` los clona adentro. Si un repo de abajo falta en disco: `./pj clonar`.
+
+- workstation (vault de arquitectura, ADRs, workflows y proyectos): `PJ-NIRI-rf-omarchy-workstation/`, rama `master`. Clonar desde https://github.com/robert-flo/PJ-NIRI-rf-omarchy-workstation si falta. Leé su `AGENTS.md` primero.
+- dotfiles (Chezmoi SSoT y `packages.json` para `niri`, `niri-classic`, `omarchy`): `rf-dotfiles/`, rama `master`. Clonar desde https://github.com/robert-flo/rf-dotfiles si falta. Leé su `AGENTS.md` primero.
+
+| Repo | Qué es | Cómo se prueba (de `onboarding.yml` §wk.como_probar) | Lo que exige el RV (§rv.exige) |
+| --- | --- | --- | --- |
+| `PJ-NIRI-rf-omarchy-workstation` | El hub: vault de Obsidian con la arquitectura por capas de la estación (00–08), ADRs, `assets/system/` (espejo de `/etc`), scripts y `forkhub` (en transición a su propio repo). | `make audit`, `make test-idempotence`, `make test-secrets` en verde, con la salida en el PR | `shellcheck` limpio y `set -euo pipefail` en cada script que se toque |
+| `rf-dotfiles` | Monorepo chezmoi: dotfiles de todos los usuarios de la estación y el manifiesto único de paquetes `.chezmoidata/packages.json`. | `chezmoi diff` sin sorpresas antes de `chezmoi apply`, y aplicado de verdad en la máquina | — |
+
+**Alcance (decisión de Roberto del 2026-11-16, ADR 0027 del CEO con su enmienda):**
+- HR-CLAVIS es la única puerta del ecosistema: su trío **trabaja** la workstation y rf-dotfiles, no solo los mira.
+- Todo trabajo se orquesta en los Issues de `robert-flo/HR-CLAVIS`: cada PR en la workstation o en dotfiles **cuelga de un issue de HR-CLAVIS** (§7.1).
+- El trío propio de la workstation sigue existiendo y su tablero no se toca. Si los dos tríos chocan en el mismo repo, **gana HR-CLAVIS** y se le avisa a Roberto.
+
+**Notas del vault que importan a este Home Repo** (rutas dentro del clon):
+- `08 - AI Developer Workflows/08.3 - Topologia Canonica de Repositorios, Worktrees y GitHub Workflows.md`: dónde vive cada repo en la PC (`/z-home-repos`, `/z/bare`, `/z/repos`, `/z-drive/tries`, `/zt`).
+- `08 - AI Developer Workflows/08.7 - Runbook - Crear un Home Repo.md`: cómo poner en marcha o crear un Home Repo.
+- `08 - AI Developer Workflows/08.8 - Cómo funciona el trío local (PM-WK-RV, pj-trio, herdr).md`: el trío en herdr, con sus desfases conocidos.
+
+**Otros repos (punteros, no los supervisa el trío):** se leen si una tarea los necesita; un cambio en ellos es otro proyecto y se escala a Roberto.
+- pj-template (el molde de este repo): `.pj/tpl/` al SHA de `template_ref`. Cambios: issue en `robert-flo/pj-template`.
+- ravn-trio (`pj-trio`), ravn-sessionizer, ravn-git-bare-clone: ver §6.
+- pj-omarchy (meta-workspace de Omarchy y del canal `[omarchy-personal]`): `/z/pj-omarchy` en la PC.
+- forkhub (forks, bare clones y worktrees; en transición): `PJ-NIRI-rf-omarchy-workstation/scripts/forkhub/`; ver `proyectos/forkhub.md` del vault.
+- nvims (suite Neovim): `/z/nvims`. Experimentos: `/z-drive/tries` (`~/Work/tries`). Fuentes de forks del escritorio: `/opt/src`.
+
+> Por qué estos punteros no llevan link de GitHub: `./pj onboard` propone como repos hijos los repos de GitHub que este archivo enlaza. Solo los repos supervisados llevan su URL de `github.com`.
+
+## 4. Lo que el PM tiene que tener al día
+
+El estado que cambia **no se escribe en este archivo**: vive en GitHub y se lee cada vez. Este archivo solo dice dónde mirar.
+
+| Qué | Dónde está la verdad | Cómo se lee |
+| --- | --- | --- |
+| Qué repos supervisa, su carpeta y su rama | `repos:` de `proyecto.yml` | `./pj onboard --mostrar` |
+| Misión, lo que no se toca, cómo prueba el WK, qué exige el RV | `onboarding.yml` | `./pj onboard --mostrar` |
+| Specs en curso y cuál va primero | `specs:` de `proyecto.yml` | — |
+| Tablero del proyecto | Issues de `robert-flo/HR-CLAVIS` | `gh issue list -R robert-flo/HR-CLAVIS` |
+| Issues y PRs abiertos de cada repo hijo | GitHub de cada repo | `gh issue list -R <dueño>/<repo>` y `gh pr list -R <dueño>/<repo>` |
+| Rama por defecto de cada repo | GitHub | `gh repo view <dueño>/<repo> --json defaultBranchRef` (tiene que coincidir con `rama` de `proyecto.yml`) |
+| Que los clones estén al día | cada clon | `./pj clonar` (fetch, rama de `proyecto.yml`, `pull --rebase --autostash`; no mueve un clon con cambios) |
+| Versión del template | `template_ref` de `proyecto.yml` | el PR de sync `pj-template/sync-*` lo sube; se revisa y se mergea como cualquier PR |
+| Estado de un trío en herdr | `.trio/<clave>/status.json` | `cat .trio/<clave>/status.json` |
+| Que todo cuadre | `./pj check` | tiene que terminar en `check: todo bien` |
+
+Si cambia lo que el PM supervisa (un repo nuevo, otra rama, otra forma de probar), se cambia en `proyecto.yml` / `onboarding.yml` con `./pj onboard` o un PR trivial del WK, y después se actualiza §3 de este archivo en el mismo PR.
+
+## 5. Mapa de archivos
+
+### Versionados (escritos a mano)
+
+`./pj check` falla si se versiona algo fuera de esta lista (más `.trio/`). Un archivo propio nuevo tiene que ir en `extras:` de `proyecto.yml`.
+
+| Archivo | Por qué está | Quién lo escribe |
+| --- | --- | --- |
+| `proyecto.yml` | Datos del proyecto: nombre, área, rama base, `template_ref`, `repos:`, `specs:`, notas, `extras:`, `skills_extra:`. Lo valida `schema/proyecto.schema.json`. | `./pj onboard` (repos) o un PR; `template_ref` lo sube el PR de sync |
+| `onboarding.yml` | El onboarding del trío (misión, no tocar, reglas del proyecto, primeros pasos, cómo prueba el WK, qué exige el RV). `./pj` lo inyecta en las tres fichas. | `./pj onboard` |
+| `AGENTS.md` | Este mapa. | PR del WK |
+| `README.md` | La portada para humanos: qué es y los comandos de todos los días. | PR del WK |
+| `CLAUDE.md` | Una línea, `@AGENTS.md`, para que Claude Code cargue este archivo (extra). | a mano |
+| `.gitignore` | Ignora clones, worktrees y temporales. El bloque entre `# >>> HR-CLAVIS: repos (generado) >>>` y `<<<` lo reescribe `./pj`; el resto es a mano. | a mano + `./pj` |
+| `pj` | El lanzador del hijo (§6.1). Copia exacta de `plantillas/hijo/pj` de pj-template. **No se edita acá.** | el PR de sync |
+| `.github/workflows/pj-template.yml` | CI: en cada PR y push corre `./pj check`; a diario (04:17 en El Salvador), a mano o cuando pj-template avisa, abre el PR de sync que sube `template_ref`. Necesita el secreto `PJ_TEMPLATE_TOKEN`. **No se edita acá.** | el PR de sync |
+| `HR-CLAVIS.code-workspace` | Workspace de VS Code / Cursor (extra). | a mano |
+| `docs/agents/issue-tracker.md`, `triage-labels.md`, `domain.md` | La configuración de las skills de ingeniería de Matt Pocock (`setup-matt-pocock-skills`): tracker, etiquetas y documentos de dominio (extras). | a mano |
+| `.trio/README.md`, `.trio/.gitkeep` | La carpeta de handoffs de `pj-trio` (§6.2). Los handoffs `.trio/<clave>/` se commitean. | a mano + el PM en herdr |
+
+### Generados (no se editan ni se versionan)
+
+| Qué | Quién lo genera | Para qué |
+| --- | --- | --- |
+| `.pj/tpl/` | `./pj` (`git fetch --depth 1` de pj-template al SHA de `template_ref`) | el template: `Makefile`, `scripts/`, `plantillas/`, `schema/`, `docs/pj-template.md` |
+| `.pj/venv/` | `scripts/py.sh` (solo si el Python del sistema no trae PyYAML y jsonschema) | Python propio, nunca instala nada en el sistema |
+| `.agents/agents/{PM,WK,RV}-HR-CLAVIS.md` | `scripts/generar.py` | fichas de agy, con `proyecto.yml` y `onboarding.yml` adentro |
+| `.agents/reglas/{logs,comun,pm,wk,rv}.md` | `generar.py` (copia) | las reglas de los roles |
+| `.agents/skills/` | `generar.py` (copia, según `skills-lock.json`) | skills de `robert-flo/skills@personal`, filtradas por rol en `plantillas/roles.yml` |
+| `.agents/generados.txt` | `generar.py` | manifiesto de lo generado (lo usan `check` y `clean`) |
+| `.cursor/rules/pm-hr-clavis.mdc`, `.cursor/rules/no-cursor-coauthor.mdc`, `.cursor/agents/{wk,rv}-hr-clavis.md` | `generar.py` | el trío en Cursor y la regla que prohíbe el coautor de Cursor |
+| `PJ-NIRI-rf-omarchy-workstation/`, `rf-dotfiles/` | `./pj clonar` (`clone-repos.sh`, con `gh repo clone`) | los repos hijos |
+| hooks `post-merge` y `post-checkout` en `.git/hooks/` (marcados `# pj-hook`) | `./pj hooks` | cada `git pull` o cambio de rama regenera solo |
+| enlaces `~/.gemini/config/agents/{PM,WK,RV}-HR-CLAVIS.md` | `./pj agy` (`scripts/instalar-agy.sh`) | agy interactivo solo resuelve `--agent` con agentes globales |
+
+## 6. Herramientas
+
+### 6.1 `./pj` (el lanzador del hijo)
+
+HR-CLAVIS **no tiene Makefile propio**: los targets son del `Makefile` de pj-template y se corren con `./pj <target>`. `make onboard` y `make clean` solo existen dentro de pj-template. Acá siempre es `./pj`.
+
+| Comando | Qué hace | Idempotente |
+| --- | --- | --- |
+| `./pj listo [--abrir]` | Todo de una después de un clone o un pull: `git pull --rebase --autostash` → trae el template → genera → instala hooks → ofrece `./pj onboard` si falta (solo con terminal) → `agy` → `clonar` → `check`. Imprime `agy --agent PM-HR-CLAVIS`; `--abrir` lo arranca. | sí |
+| `./pj` | Solo trae pj-template al `template_ref` y genera `.agents/` y `.cursor/`. | sí |
+| `./pj onboard` | La entrevista del onboarding: junta los hechos (`proyecto.yml`, README, este archivo, los repos y su stack), propone cada campo (Enter acepta), resume y escribe `onboarding.yml` y `repos:` solo con tu sí. Si ya está hecho, lo muestra y pregunta qué cambiar. `--mostrar` solo imprime; `--si` y `--respuestas F` sin preguntas; `--rehacer` la repite entera. | sí |
+| `./pj clean [--onboarding]` | Deshace `./pj listo` para repetirlo: borra `.pj/`, lo generado (solo lo del manifiesto), los hooks `# pj-hook`, los enlaces de agy de este clon y los clones **sin nada local**. Un clon con cambios, ignorados, worktrees, stash, commits o tags sin subir se queda y sale con 1. `--onboarding` además deja `onboarding.yml` y `repos:` sin hacer (se niega si tienen cambios sin commitear). | sí |
+| `./pj check` | Esquema de `proyecto.yml` y `onboarding.yml`, idempotencia, regenerar desde cero da los mismos bytes, sin `{{ }}`, sin referencias a otras plataformas, solo los archivos permitidos versionados, `pj` y el workflow iguales a los del template, skills visibles, humo estático, sintaxis y YAML. | sí |
+| `./pj humo` | La prueba de humo; con agy instalado arranca `PM-HR-CLAVIS` sin interacción y exige el autochequeo y la misión. | sí |
+| `./pj clonar` | Clona o alinea los repos de `proyecto.yml`. Nunca destruye cambios locales. | sí |
+| `./pj agy` | Enlaza las fichas en `~/.gemini/config/agents`. Una vez por máquina **y por usuario**. | sí |
+| `./pj hooks` | Instala los hooks que regeneran tras cada pull. No pisa hooks propios. | sí |
+| `./pj generar` | Lo mismo que `./pj`, vía el Makefile. | sí |
+
+`skills`, `nuevo-hijo` y `deriva` son targets **solo de pj-template**; no se usan acá. Auth: `PJ_TEMPLATE_TOKEN` si existe (CI); si no, `gh auth git-credential`. `PJ_TEMPLATE_DIR=<checkout>` usa un pj-template local (pruebas). Detalle: `.pj/tpl/docs/pj-template.md`.
+
+### 6.2 `pj-trio` y `trio-status` (el trío en herdr)
+
+- **Qué hace:** abre en herdr un workspace con tres pestañas a pantalla completa (`pm`, `wk`, `rv`) para **un ticket**, arranca cada rol con `agy --agent <ROL>-HR-CLAVIS` y le manda al PM el arranque (`trio-pm-prompt.md`) renderizado en `.trio/<clave>/kickoff.md`. Desde ahí el PM le manda el trabajo al WK y al RV con `herdr agent prompt` y espera sus entregas.
+- **Dónde vive:** código en `robert-flo/ravn-trio`, que es la **fuente de verdad** de cómo corre el trío en herdr (ADR 0016 de pj-template). Paquete Arch `ravn-trio` desde `robert-flo/ravn-trio-arch`, publicado en `[omarchy-personal]`. Se instala con `pacman` (está en `packages.personal` de rf-dotfiles). Deja `/usr/bin/pj-trio` y, en `/usr/share/ravn/trio/`, `trio-status`, `trio-pm-prompt.md`, `trio.conf.example` y el plugin de herdr. Verificá la versión con `pacman -Q ravn-trio` (el PM mergea tras el `APRUEBO` desde la v0.1.8).
+- **Cómo se usa con HR-CLAVIS:**
+
+```bash
+pj-trio /z-home-repos/HR-CLAVIS <ticket> --repo <dir del repo hijo> [--base <rama del spec>]
+```
+
+  - Pasale la **ruta** del Home Repo: `pj-trio` busca los proyectos por nombre solo en `$PJ_TRIO_ROOTS` (por defecto `/z-drive/tries`) y no conoce `/z-home-repos`. Con el nombre a secas clona otra copia. También sirve `PJ_TRIO_ROOTS=/z-home-repos`.
+  - Con `--repo`, el `<ticket>` es un issue **del repo hijo** (`gh issue view <ticket> -R <dueño>/<repo>`), los agentes abren en ese clon y el Home Repo se les suma con `--add-dir`. Sin `--repo`, el ticket es de HR-CLAVIS y el trabajo cae en el Home Repo mismo.
+  - `--base <rama del spec>` para un sub-issue (el worktree sale de `origin/<rama>` y el PR va contra ella). Sin `--base` (trivial) sale de `origin/HEAD`.
+  - `--dry-run` muestra todo sin aplicarlo; `--print-kickoff` imprime el arranque para pegarlo a mano.
+- **Nombres:** workspace `trio HR-CLAVIS/<miembro>#<ticket>`. Agentes `pm|wk|rv-<miembro corto>-<ticket>` (sin prefijos `rf-`, `fo-`, `pj-domina-`; ≤ 32 caracteres).
+- **Handoff:** `.trio/<clave>/` en el Home Repo, con `<clave>` = `<repo hijo>-<ticket>` (con `--repo`) o `<ticket>`. Lleva `plan.md` (PM), `wk.md` (WK), `rv.md` (RV) y `status.json`. Se commitea en HR-CLAVIS y nunca se duplica en el repo hijo.
+- **`trio-status`** no está en el `PATH`: el PM lo llama con la ruta que le da el arranque (o `pj-trio status`) y **solo escribe** `status.json` (`en-curso` | `hecho` | `needs-roberto`); no es un visor. Para ver el estado: `cat .trio/<clave>/status.json`.
+- **Config:** `trio.conf` por capas (`/usr/share/ravn/trio/trio.conf` → `/zt/ravn/trio/trio.conf` → `.trio/trio.conf`; `PJ_TRIO_CONFIG` reemplaza todo). Fija qué programa corre cada rol y la identidad de git.
+
+### 6.3 `ravn-sessionizer` (el «sessionizer» de herdr)
+
+- **Qué es:** el que a veces se llama «herd-sesionizer» es `ravn-sessionizer`: un `fzf` para moverte por herdr (workspaces, clones, meta-repos y sus miembros, agentes) y lanzar un trío desde un issue con `pj-trio start <pj> <ticket> --repo <miembro>`. Atajos de bash `rs` (repos) y `ri` (issues → trío); en herdr, `prefix+f`, `prefix+a` y `prefix+t` si los configurás.
+- **Dónde vive:** código en `robert-flo/ravn-sessionizer`, paquete `ravn-sessionizer` desde `robert-flo/ravn-sessionizer-arch` en `[omarchy-personal]`. Es una reimplementación propia, inspirada en `salkhalil/herdr-sessionizer` (del que hay un fork `robert-flo/fo-herdr-sessionizer` registrado en forkhub).
+- **Con HR-CLAVIS hoy no sirve para lanzar tríos:** solo reconoce como proyectos los repos que empiezan con `pj-`, así que HR-CLAVIS cae en «sin pj» y `ri` no lanza nada. Lanzá el trío con `pj-trio` (§6.2).
+
+### 6.4 `ravn-git-bare-clone` y sus atajos (`git-bare-clone`, `git-create-worktree`, `git-issue-worktree`)
+
+- **Qué hace:** clona un repo en modo bare en `$BARE_HOME/<repo>.git` (por defecto `/z/bare`) y arma worktrees en `$WORKTREES_HOME/<repo>/<rama>` (por defecto `/z/repos`), dejando libre la rama por defecto para que varios agentes trabajen en paralelo. `sync` crea los worktrees que falten; `create <nombre>` y `issue <n> <slug>` crean un worktree nuevo. `git-bare-clone`, `git-create-worktree` y `git-issue-worktree` son atajos de compatibilidad.
+- **Dónde vive:** `robert-flo/ravn-git-bare-clone`, paquete `ravn-git-bare-clone` en `[omarchy-personal]` (`/opt/ravn-git-bare-clone`, comandos en `/usr/bin`). Hay versiones viejas de los mismos scripts en `robert-flo/pj-domina-rf-tools/bin/` (las instala su `install.sh` en `~/bin`) y en repos archivados.
+- **Con HR-CLAVIS:** **no se usa.** `./pj clonar` clona con `gh repo clone` dentro del Home Repo, y el worktree del WK sale de `git worktree add` según ravn-trio (§7.3). `/z/bare` y `/z/repos` son la topología de la workstation para trabajo fuera del trío (08.3).
+
+### 6.5 Las demás
+
+| Herramienta | Qué es | Dónde vive / cómo se instala | Uso en HR-CLAVIS |
+| --- | --- | --- | --- |
+| `gh` | CLI de GitHub, logueado como `robert-flo` | paquete `github-cli` | issues, PRs, veredictos, merges, clones; también da las credenciales para bajar pj-template |
+| `herdr` | gestor de workspaces de terminal para agentes | paquete de `[omarchy-personal]` (≥ 0.9.5) | donde corre `pj-trio` |
+| `agy` | Antigravity, el motor de las fichas | en la PC | `agy --agent PM-HR-CLAVIS` |
+| `try` / try-clone | clones rápidos con fecha en `/z-drive/tries` | `robert-flo/try-clone` | `pj-trio` y `ravn-sessionizer` lo usan para clonar lo que falta (por eso conviene pasarles la ruta) |
+| forkhub | auditoría de forks, bare clones y topología | `PJ-NIRI-rf-omarchy-workstation/scripts/forkhub/` (en transición) | se trabaja como parte de la workstation |
+
+## 7. Cómo se opera
+
+Las reglas completas de cada paso están en `.agents/reglas/` (`pm.md` §Tu flujo, `wk.md` §Tu flujo, `rv.md`, `comun.md` §Git y §El tablero). Esto es el recorrido.
+
+### 7.1 Dónde va cada issue [HR-CLAVIS]
+
+- Todo pedido empieza con un issue en **`robert-flo/HR-CLAVIS`** (tablero, specs). Antes de crear, se busca (`gh issue list --search`).
+- Si el cambio cae en un repo hijo, el ticket que implementa el WK vive **en ese repo** (es lo que lee `pj-trio --repo`), enlazado al issue de HR-CLAVIS del que cuelga. Un spec que cruza repos lleva uno en cada repo, enlazados (`comun.md` §Reglas de GitHub).
+- El PR cierra el ticket de su repo (`Closes #N`) y nombra el issue de HR-CLAVIS.
+
+### 7.2 Task Sizing (antes de elegir el camino)
+
+Lo usa el PM en `pm.md` §Tu flujo 3. Viene de `robert-flo/Template`; es una convención local encima del flujo de Matt Pocock, no de sus skills.
+
+1. **Trivial:** cambios de configuración simples (`.gitignore`, plantillas de variables), erratas en docs, subidas menores de dependencias. Sin grill ni spec: un issue `ready-for-agent`, `implement` y `code-review`, un PR a `master`.
+2. **Engineering:** todo lo que agrega, cambia o quita lógica, scripts, targets de build, librerías, contratos de comportamiento o arquitectura. Flujo completo, sin saltos.
+
+El PM **dice en voz alta** la clasificación y el camino antes de empezar, para que Roberto pueda vetarla. Si duda, Engineering.
+
+### 7.3 El circuito
+
+```mermaid
+flowchart TD
+  A[Pedido de Roberto al PM] --> B[ro-restate-goals: ¿es eso?]
+  B --> C[Issue en HR-CLAVIS: buscar o crear needs-triage]
+  C --> D{Task Sizing}
+  D -- Engineering --> E[grill-with-docs]
+  E --> F[to-spec: issue con spec + rama del spec número-slug]
+  F --> G[to-tickets: sub-issues ready-for-agent, Roberto aprueba]
+  G --> H[WK: worktree por sub-issue, PR draft, code-review]
+  H --> I[WK mergea cada sub-issue a la rama del spec]
+  I --> J[PM abre el PR final rama del spec → master]
+  D -- Trivial --> T[Issue ready-for-agent → WK: PR a master]
+  J --> K{RV prueba el head exacto}
+  T --> K
+  K -- BLOQUEO --> H
+  K -- APRUEBO sha --> L[PM: gh pr merge --squash --delete-branch --match-head-commit sha]
+  L --> M[PM limpia etiquetas y le pasa a Roberto PR, veredicto, SHA y validación manual]
+```
+
+- **Rama del spec** (ADR 0006 de pj-template): `<número>-<slug>`, la crea el PM desde la rama por defecto al publicar el spec, sin commits suyos. Los PRs del WK van a ella; su único PR final va a `master`.
+- **Worktree del WK** (convención de ravn-trio, `wk.md` paso 3): uno nuevo por issue, siempre, hermano del clon:
+  `git worktree add -b feat/<número>-<slug> <clon>-wt-<número>-<AAAAMMDDhhmmss> <base>`.
+  `<base>` es la rama del spec en un sub-issue y `origin/HEAD` en un trivial. En herdr lo crea el PM. Al terminar, `git worktree remove`, y el clon principal queda limpio en su rama por defecto.
+- **PR:** body con la skill `pr` (`## Summary`, `## Evidence`, `## Merge Danger`), como draft hasta que CI esté verde y `code-review` limpio. Las capturas van a `robert-flo/assets`, nunca commiteadas en el repo.
+- **RV:** prueba el PR de verdad en un worktree y comenta en el PR `APRUEBO <sha>` o `BLOQUEO` con archivo y línea. No programa, no mergea, no cambia etiquetas.
+- **Merge** (ADR 0014 de pj-template): a la rama por defecto mergea **solo el PM**, solo tras el `APRUEBO <sha>` del RV y sobre ese head exacto:
+  `gh pr merge <N> --squash --delete-branch --match-head-commit <sha>`.
+  Si el head cambió después del `APRUEBO`, no se mergea y se pide otra revisión. No hace falta orden de Roberto.
+- **Hecho:** issue cerrado por el merge y sin etiquetas de triage; ramas y worktrees borrados.
+- **El PR de sync** (`pj-template/sync-*`, lo abre la CI) es un PR más: pasa por el RV y lo mergea el PM.
+- **Etiquetas** (`schema/etiquetas.tsv` de pj-template; la CI las crea en cada sync): `needs-triage`, `needs-info` (con `ON HOLD: <motivo>`), `spec`, `ready-for-agent`, `ready-to-merge`, `wontfix`.
+
+### 7.4 En herdr
+
+Con `pj-trio` (§6.2) el circuito es el mismo, por ticket. El PM escribe `plan.md`, crea el worktree, le manda el trabajo al WK y espera `wk.md`. Después le pasa la revisión al RV y espera `rv.md` con `APRUEBO <sha>` o `BLOQUEO`. Con el `APRUEBO`, mergea y cierra: `status.json` en `hecho`, commit y push de `.trio/`, `worktree remove`. Un paso que falla se reintenta **una** vez; al segundo fallo queda `needs-roberto` con aviso por `notify-send`.
+
+## 8. Reglas duras
+
+Estas no se negocian en ningún repo del proyecto. Su dueño es `comun.md` §Git y §Tu PC (y `onboarding.yml`); acá se resumen para que nadie las pase por alto.
+
+- Identidad de git en todo commit: `Roberto Flores <25asab015@ujmd.edu.sv>`.
+- Ningún commit lleva trailer ni firma de agente: ni `Co-authored-by`, ni `agente: … · plataforma: …`, ni ninguna otra atribución, en ningún repo.
+- Antes de trabajar y antes de cada push: `git pull --rebase --autostash`.
+- Nunca `git push --force` ni `--force-with-lease`: si la historia publicada no cuadra, rama nueva y PR nuevo.
+- Nunca commits directos a la rama por defecto ni a la rama de un spec: rama auxiliar o worktree, PR, revisión, merge y limpiar la rama.
+- La rama por defecto de los repos propios es `master`; en los forks propios se trabaja en `personal`.
+- Nunca abrir PRs, ramas ni pushes hacia upstreams (`omacom/omarchy` ni ningún otro); nunca PRs hacia `StatIndet`.
+- Secretos nunca en texto plano: ni en archivos, ni en la línea de comandos, ni en un chat, ni en un log. `PJ_TEMPLATE_TOKEN` nunca se imprime.
+- La única puerta a `/` es `pacman` vía `[omarchy-personal]`.
+- Toda automatización tiene que ser reproducible e idempotente: correrla una o diez veces deja el mismo estado.
+- Los arreglos van en el origen (el repo dueño), nunca como parche manual en la máquina.
+- Los temporales en la PC van en `~/.cache/ravn-piloto/`; `/zt/` es zona efímera y nada permanente vive ahí.
+- Nunca tocar `~/Work/tries/_boveda` (la bóveda cifrada) ni su sincronización.
+- Nunca se editan a mano `.agents/`, `.cursor/`, `.pj/`, `./pj` ni el workflow: se cambian en pj-template.
+
+## 9. Dónde vive cada verdad (y quién manda si chocan)
+
+| Qué | Dueño |
+| --- | --- |
+| Reglas de los roles, Git, tablero, tu PC | `.agents/reglas/{logs,comun,pm,wk,rv}.md` (de pj-template; se cambian con un issue en `robert-flo/pj-template`) |
+| Decisiones del trío (merge, rama del spec, onboarding…) | `docs/adr/` de pj-template (`.pj/tpl/docs/adr/`) |
+| Términos (trío, rama del spec, listo para mergear) | `GLOSSARY.md` de pj-template |
+| Cómo funciona el modo dependencia, la CI y el secreto | `.pj/tpl/docs/pj-template.md` |
+| Cómo corre el trío en herdr | `robert-flo/ravn-trio` (README y `trio-pm-prompt.md`); si choca con las reglas de pj-template, mandan las de pj-template y se corrige ravn-trio |
+| Datos del proyecto | `proyecto.yml` |
+| Onboarding del trío | `onboarding.yml` |
+| Arquitectura del proyecto y este mapa | este `AGENTS.md` y `README.md` |
+| Topología de la PC y runbooks | notas 08.3, 08.7 y 08.8 del vault de la workstation |
+| Reglas propias de cada repo hijo | el `AGENTS.md` de ese repo |
+| Qué paquetes se instalan | `.chezmoidata/packages.json` de rf-dotfiles |
+
+Precedencia: en datos manda tu ficha; en reglas, `.agents/reglas/`; en arquitectura, este archivo. Si encontrás dos fuentes que se contradicen, no elijas en silencio: decilo y proponé el arreglo en el dueño.
+
+## 10. Qué no es este repo
+
+- No es un repo de código: acá no se programa nada de la workstation ni de dotfiles. El código se cambia en su clon y su PR va a su repo.
+- No es una copia de las reglas: si una regla falta o está mal, se arregla en pj-template, no en este archivo.
+- No es el lugar del estado: issues, PRs y avances viven en GitHub y en `.trio/`, no en este archivo.
+- No es donde viven los clones permanentes de Roberto: los repos hijos de acá son para el trío; la topología de la PC está en 08.3.
+- No es el único trío del ecosistema: el de la workstation sigue con su tablero (§3).
 
 ---
 
@@ -26,7 +315,7 @@ Los repos que supervisa el trío salen del onboarding del PM (`repos:` de `proye
 
 ### Issue tracker
 
-Los issues y specs viven en GitHub Issues de `robert-flo/HR-CLAVIS` (CLI `gh`). See `docs/agents/issue-tracker.md`.
+Los issues y specs viven en GitHub Issues de `robert-flo/HR-CLAVIS` (CLI `gh`); los tickets de un repo hijo, en ese repo (§7.1). See `docs/agents/issue-tracker.md`.
 
 ### Triage labels
 
@@ -34,42 +323,10 @@ Vocabulario por defecto: `needs-triage`, `needs-info`, `ready-for-agent`, `ready
 
 ### Domain docs
 
-Single-context: un `GLOSSARY.md` y `docs/adr/` en la raíz, creados cuando hagan falta. See `docs/agents/domain.md`.
+Single-context: un `GLOSSARY.md` y `docs/adr/` en la raíz, creados cuando hagan falta (si se crean, van en `extras:` de `proyecto.yml`). See `docs/agents/domain.md`.
 
 ---
 
-## Home Repo
+## Cómo cambiar este archivo
 
-Este es el **Home Repo** (`robert-flo/HR-CLAVIS`, antes PJ-CLAVIS) del ecosistema **PJ-CLAVIS** (siguiendo el [Home Repo Pattern](https://www.aihero.dev/the-home-repo-pattern)).
-Desde aquí se inician las sesiones de agentes de desarrollo IA (`MonoCode`, `T3 Code`, `herdr`, `Claude Code`, `Codex`, `Antigravity`) para orquestar cambios multi-repositorio con una única fuente de contexto, reglas y skills compartidas.
-
----
-
-## Reglas Globales del Ecosistema
-
-1. **Git y Ramas:**
-   - Rama por defecto de repositorios propios: `master` (nunca `main`).
-   - Rama de trabajo en forks propios: `personal`.
-   - Nunca hacer commit directo a `master` en producción: usar rama auxiliar / worktree → PR → rebase → merge → limpiar rama.
-   - Sin trailers `Co-authored-by` ni atribución automática a agentes en commits.
-   - Nunca abrir PRs hacia `StatIndet` (no acepta PRs generados con IA).
-2. **Idempotencia y Cero Adivinanzas:**
-   - Toda automatización debe ser 100% reproducible e idempotente (`make converge`, `chezmoi apply`).
-   - La única puerta a `/` es `pacman` vía `[omarchy-personal]` (ADR 0001 / ADR 0002).
-3. **Topología Canónica:**
-   - Bare clones y worktrees activos: `/z/bare/<repo>.git` y `/z/repos/<repo>/` (`ravn-git-bare-clone`).
-   - Experimentos rápidos: `/z-drive/tries/` (`~/Work/tries`, `try-clone`).
-   - Zona temporal efímera: `/zt/` (prohibido mantener trabajo permanente aquí).
-   - Ver la especificación completa en `/z/vaults/PJ-NIRI-rf-omarchy-workstation/08 - AI Developer Workflows/08.3 - Topologia Canonica de Repositorios, Worktrees y GitHub Workflows.md`.
-
----
-
-## Other Repos (Punteros de Navegación)
-
-- **workstation** (Vault de arquitectura, ADRs, workflows y proyectos): `/z/vaults/PJ-NIRI-rf-omarchy-workstation`. Clonar desde `https://github.com/robert-flo/PJ-NIRI-rf-omarchy-workstation.git` si falta. *Leer su `AGENTS.md` primero.* *(Renombre diferido a `PJ-CLAVIS-rf-workstation`).*
-- **dotfiles** (Chezmoi SSoT y `packages.json` para `niri`, `niri-classic`, `omarchy`): `/z/rf-dotfiles`. Clonar desde `https://github.com/robert-flo/rf-dotfiles.git` si falta. *Leer su `AGENTS.md` primero.* *(Renombre diferido a `PJ-CLAVIS-rf-dotfiles`).*
-- **pj-omarchy** (Meta-workspace Omarchy, `fo-omarchy`, `omarchy-personal-repo` y skills compartidas): `/z/pj-omarchy`. *Leer su `AGENTS.md` primero.*
-- **forkhub (proyecto en transición)** (Orquestador SSoT de forks, bare clones y worktrees): actualmente en `/z/vaults/PJ-NIRI-rf-omarchy-workstation/scripts/forkhub/` mientras se extrae hacia `/z/repos/PJ-CLAVIS-rf-forkhub` y `/z/repos/PJ-CLAVIS-rf-forkhub-arch`. Ver `/z/vaults/PJ-NIRI-rf-omarchy-workstation/proyectos/forkhub.md`.
-- **nvims** (Suite Neovim compartida `rvim`, `dotfiles-craftzdog`, `nvim2k`): `/z/nvims`.
-- **tries** (Experimentos y PoCs rápidos): `/z-drive/tries` (también `~/Work/tries`).
-- **opt-src** (Fuentes de compilación de forks del escritorio): `/opt/src`.
+Como todo: issue trivial en HR-CLAVIS, PR del WK, `APRUEBO` del RV y merge del PM. Si cambiás algo genérico (sin **[HR-CLAVIS]**), pensá si también va a la plantilla del `AGENTS.md` de los hijos en pj-template.

@@ -1,18 +1,20 @@
 # .trio/ — handoffs del trío PM/WK/RV en herdr
 
-Cada ticket que corre el trío deja acá su carpeta `.trio/<ticket>/` (plan, reporte del WK, veredicto del RV), y se commitea a git.
+Cada ticket que corre el trío deja acá su carpeta `.trio/<clave>/` (`plan.md`, `wk.md`, `rv.md`, `status.json`), y se commitea a git. `<clave>` es `<repo hijo>-<ticket>` si se lanzó con `--repo`, o `<ticket>` si no.
 
 ## Cómo lanzarlo
 
-Desde la estación de trabajo, con `pj-trio` (instalado como `/usr/bin/pj-trio` por el paquete [`ravn-trio-arch`](https://github.com/robert-flo/ravn-trio-arch); fuente canónica: [`robert-flo/ravn-trio`](https://github.com/robert-flo/ravn-trio/blob/main/pj-trio)):
+Desde la estación de trabajo, con `pj-trio` (instalado como `/usr/bin/pj-trio` por el paquete `ravn-trio` de `[omarchy-personal]`; fuente de verdad: `robert-flo/ravn-trio`):
 
 ```bash
-pj-trio HR-CLAVIS <ticket> [--repo <miembro>]
+pj-trio /z-home-repos/HR-CLAVIS <ticket> --repo <dir del repo hijo> [--base <rama del spec>]
 ```
 
-- `<ticket>`: número del issue a trabajar.
-- `<miembro>`: el `dir` del repo en `proyecto.yml` donde cae el ticket.
+- Pasá la ruta del Home Repo: `pj-trio` busca por nombre solo en `$PJ_TRIO_ROOTS` (por defecto `/z-drive/tries`).
+- `<ticket>`: con `--repo`, número del issue **en ese repo hijo**; sin `--repo`, de HR-CLAVIS.
+- `<dir del repo hijo>`: el `dir` del repo en `proyecto.yml` (`PJ-NIRI-rf-omarchy-workstation` o `rf-dotfiles`).
+- `--base`: la rama del spec si el ticket es un sub-issue; sin `--base`, el worktree sale de `origin/HEAD`.
 
-Abre en herdr las pestañas `pm`, `wk` y `rv`, cada una con `agy --agent PM-HR-CLAVIS` / `WK-HR-CLAVIS` / `RV-HR-CLAVIS` (agentes `pm-hr-clavis`, `wk-hr-clavis`, `rv-hr-clavis`). El estado se ve con `trio-status`.
+Abre en herdr las pestañas `pm`, `wk` y `rv`, cada una con `agy --agent PM-HR-CLAVIS` / `WK-HR-CLAVIS` / `RV-HR-CLAVIS` (agentes de herdr `pm|wk|rv-<miembro corto>-<ticket>`). El estado se lee en `.trio/<clave>/status.json` (lo escribe el PM con `trio-status`, que no es un visor).
 
-Regla de merge (la misma de `AGENTS.md`): el PM mergea tras el `APRUEBO <sha>` del RV, con `gh pr merge <N> --squash --delete-branch --match-head-commit <sha>`, sin esperar la orden de Roberto.
+Regla de merge (la misma de `AGENTS.md` §7.3): el PM mergea tras el `APRUEBO <sha>` del RV, con `gh pr merge <N> --squash --delete-branch --match-head-commit <sha>`, sin esperar la orden de Roberto.

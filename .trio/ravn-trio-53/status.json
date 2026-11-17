@@ -1,8 +1,11 @@
 {
   "ticket": "ravn-trio-53",
-  "estado": "en-curso",
-  "paso": "wk",
-  "error": "wk quedó idle sin wk.md (error 401 unauthenticated en agy)",
-  "timestamp": "2026-11-17T15:08:15-06:00",
-  "intentos": 2
+  "estado": "hecho",
+  "paso": "cierre",
+  "error": "",
+  "timestamp": "2026-11-17T15:30:41-06:00",
+  "intentos": 2,
+  "pr": "https://github.com/robert-flo/ravn-trio/pull/54",
+  "head": "9f571842087aac54faebdac7801987914727568e",
+  "merge_sha": "5a2c91da9043ee3120f1e41371f9a0c2885330fa"
 }

@@ -63,7 +63,7 @@ Los clones de arriba son **para leer** (el PM y el contexto de los agentes). Nad
 
 | Plataforma | PM | WK y RV | Cómo se arranca |
 | --- | --- | --- | --- |
-| agy | `.agents/agents/PM-HR-CLAVIS.md` (enlazado en `~/.gemini/config/agents`) | `WK-`/`RV-HR-CLAVIS.md`; el PM los lanza con `invoke_subagent` | `agy --agent PM-HR-CLAVIS` desde la raíz |
+| agy | `.agents/agents/PM-HR-CLAVIS.md` (enlazado en `~/.gemini/config/agents`) | `WK-`/`RV-HR-CLAVIS.md`; el PM los lanza con `invoke_subagent` | `make agy-pm` desde la raíz (pull + `./pj listo` + agy vía mise) |
 | Cursor (IDE o CLI) | regla `alwaysApply` `.cursor/rules/pm-hr-clavis.mdc`: el chat **es** el PM | subagentes `.cursor/agents/{wk,rv}-hr-clavis.md` | abrí `HR-CLAVIS.code-workspace` o corré `cursor-agent` en la raíz |
 | herdr (`pj-trio`) | pestaña `pm` con agy | pestañas `wk` y `rv` | `pj-trio … <ticket>` (§6.2) |
 | Claude Code | `CLAUDE.md` importa este archivo | — | no tiene fichas propias; leé las de `.agents/agents/` |
@@ -133,6 +133,7 @@ Si cambia lo que el PM supervisa (un repo nuevo, otra rama, otra forma de probar
 | `CLAUDE.md` | Una línea, `@AGENTS.md`, para que Claude Code cargue este archivo (extra). | a mano |
 | `.gitignore` | Ignora clones, worktrees y temporales. El bloque entre `# >>> HR-CLAVIS: repos (generado) >>>` y `<<<` lo reescribe `./pj`; el resto es a mano. | a mano + `./pj` |
 | `pj` | El lanzador del hijo (§6.1). Copia exacta de `plantillas/hijo/pj` de pj-template. **No se edita acá.** | el PR de sync |
+| `Makefile` | Atajos a `./pj` (§6.1): `make agy-pm`, `agy-wk`, `agy-rv`, `listo`, `onboard`, `clean`, `check`. Copia exacta de `plantillas/hijo/Makefile` de pj-template (ADR 0020). **No se edita acá.** | el PR de sync |
 | `.github/workflows/pj-template.yml` | CI: en cada PR y push corre `./pj check`; a diario (04:17 en El Salvador), a mano o cuando pj-template avisa, abre el PR de sync que sube `template_ref`. Necesita el secreto `PJ_TEMPLATE_TOKEN`. **No se edita acá.** | el PR de sync |
 | `HR-CLAVIS.code-workspace` | Workspace de VS Code / Cursor (extra). | a mano |
 | `docs/agents/issue-tracker.md`, `triage-labels.md`, `domain.md` | La configuración de las skills de ingeniería de Matt Pocock (`setup-matt-pocock-skills`): tracker, etiquetas y documentos de dominio (extras). | a mano |
@@ -151,24 +152,36 @@ Si cambia lo que el PM supervisa (un repo nuevo, otra rama, otra forma de probar
 | `.cursor/rules/pm-hr-clavis.mdc`, `.cursor/rules/no-cursor-coauthor.mdc`, `.cursor/agents/{wk,rv}-hr-clavis.md` | `generar.py` | el trío en Cursor y la regla que prohíbe el coautor de Cursor |
 | `PJ-NIRI-rf-omarchy-workstation/`, `rf-dotfiles/` | `./pj clonar` (`clone-repos.sh`, con `gh repo clone`) | los repos hijos |
 | hooks `post-merge` y `post-checkout` en `.git/hooks/` (marcados `# pj-hook`) | `./pj hooks` | cada `git pull` o cambio de rama regenera solo |
-| enlaces `~/.gemini/config/agents/{PM,WK,RV}-HR-CLAVIS.md` | `./pj agy` (`scripts/instalar-agy.sh`) | agy interactivo solo resuelve `--agent` con agentes globales |
+| enlaces `~/.gemini/config/agents/{PM,WK,RV}-HR-CLAVIS.md` | `./pj listo` o `./pj enlazar` (`scripts/instalar-agy.sh`) | agy interactivo solo resuelve `--agent` con agentes globales |
 
 ## 6. Herramientas
 
 ### 6.1 `./pj` (el lanzador del hijo)
 
-HR-CLAVIS **no tiene Makefile propio**: los targets son del `Makefile` de pj-template y se corren con `./pj <target>`. `make onboard` y `make clean` solo existen dentro de pj-template. Acá siempre es `./pj`.
+El `Makefile` de HR-CLAVIS es solo de atajos y lo manda pj-template (`plantillas/hijo/Makefile`, ADR 0020): cada target llama a `./pj`, la lógica vive ahí. Los demás targets (`humo`, `clonar`, `generar`…) son del `Makefile` de pj-template y se corren con `./pj <target>`.
+
+**El comando de todos los días es `make agy-pm`** (desde `/z-home-repos/HR-CLAVIS`): `git pull --rebase --autostash` → `./pj listo` → y solo si terminó bien, `MISE_MINIMUM_RELEASE_AGE=0 mise use -g --quiet antigravity-cli` y `exec mise x antigravity-cli -- agy --dangerously-skip-permissions --agent PM-HR-CLAVIS`. Es el wrapper `agy` de la workstation con el pull y el listo adelante. `make agy-wk` / `make agy-rv` abren el WK o el RV; `ARGS="…"` se pasa tal cual a agy. Sin mise usa el `agy` del PATH.
+
+| Atajo | Equivale a |
+| --- | --- |
+| `make agy-pm` / `agy-wk` / `agy-rv` | `./pj agy pm` / `wk` / `rv` |
+| `make listo` | `./pj listo` |
+| `make onboard` | `./pj onboard` (`ARGS="--mostrar"`…) |
+| `make clean` | `./pj clean` (`ARGS="--onboarding"`) |
+| `make check` | `./pj check` |
+| `make` | lista los atajos |
 
 | Comando | Qué hace | Idempotente |
 | --- | --- | --- |
-| `./pj listo [--abrir]` | Todo de una después de un clone o un pull: `git pull --rebase --autostash` → trae el template → genera → instala hooks → ofrece `./pj onboard` si falta (solo con terminal) → `agy` → `clonar` → `check`. Imprime `agy --agent PM-HR-CLAVIS`; `--abrir` lo arranca. | sí |
+| `./pj listo [--abrir]` | Todo de una después de un clone o un pull: `git pull --rebase --autostash` → trae el template → genera → instala hooks → ofrece `./pj onboard` si falta (solo con terminal) → `agy` → `clonar` → `check`. Imprime `make agy-pm`; `--abrir` arranca el PM como `./pj agy pm`. | sí |
+| `./pj agy [pm\|wk\|rv] [args…]` | `./pj listo` y, si pasó, abre ese agente (pm por defecto) en agy vía mise con `--dangerously-skip-permissions --agent <ROL>-HR-CLAVIS args…`. Si `listo` falla no abre nada. Es lo que corre `make agy-pm`. | sí |
 | `./pj` | Solo trae pj-template al `template_ref` y genera `.agents/` y `.cursor/`. | sí |
 | `./pj onboard` | La entrevista del onboarding: junta los hechos (`proyecto.yml`, README, este archivo, los repos y su stack), propone cada campo (Enter acepta), resume y escribe `onboarding.yml` y `repos:` solo con tu sí. Si ya está hecho, lo muestra y pregunta qué cambiar. `--mostrar` solo imprime; `--si` y `--respuestas F` sin preguntas; `--rehacer` la repite entera. | sí |
 | `./pj clean [--onboarding]` | Deshace `./pj listo` para repetirlo: borra `.pj/`, lo generado (solo lo del manifiesto), los hooks `# pj-hook`, los enlaces de agy de este clon y los clones **sin nada local**. Un clon con cambios, ignorados, worktrees, stash, commits o tags sin subir se queda y sale con 1. `--onboarding` además deja `onboarding.yml` y `repos:` sin hacer (se niega si tienen cambios sin commitear). | sí |
-| `./pj check` | Esquema de `proyecto.yml` y `onboarding.yml`, idempotencia, regenerar desde cero da los mismos bytes, sin `{{ }}`, sin referencias a otras plataformas, solo los archivos permitidos versionados, `pj` y el workflow iguales a los del template, skills visibles, humo estático, sintaxis y YAML. | sí |
+| `./pj check` | Esquema de `proyecto.yml` y `onboarding.yml`, idempotencia, regenerar desde cero da los mismos bytes, sin `{{ }}`, sin referencias a otras plataformas, solo los archivos permitidos versionados, `pj`, `Makefile` y el workflow iguales a los del template, skills visibles, humo estático, sintaxis y YAML. | sí |
 | `./pj humo` | La prueba de humo; con agy instalado arranca `PM-HR-CLAVIS` sin interacción y exige el autochequeo y la misión. | sí |
 | `./pj clonar` | Clona o alinea los repos de `proyecto.yml`. Nunca destruye cambios locales. | sí |
-| `./pj agy` | Enlaza las fichas en `~/.gemini/config/agents`. Una vez por máquina **y por usuario**. | sí |
+| `./pj enlazar` | Solo enlaza las fichas en `~/.gemini/config/agents` (`./pj listo` ya lo hace). Una vez por máquina **y por usuario**. | sí |
 | `./pj hooks` | Instala los hooks que regeneran tras cada pull. No pisa hooks propios. | sí |
 | `./pj generar` | Lo mismo que `./pj`, vía el Makefile. | sí |
 
@@ -212,7 +225,7 @@ pj-trio /z-home-repos/HR-CLAVIS <ticket> --repo <dir del repo hijo> [--base <ram
 | --- | --- | --- | --- |
 | `gh` | CLI de GitHub, logueado como `robert-flo` | paquete `github-cli` | issues, PRs, veredictos, merges, clones; también da las credenciales para bajar pj-template |
 | `herdr` | gestor de workspaces de terminal para agentes | paquete de `[omarchy-personal]` (≥ 0.9.5) | donde corre `pj-trio` |
-| `agy` | Antigravity, el motor de las fichas | en la PC | `agy --agent PM-HR-CLAVIS` |
+| `agy` | Antigravity, el motor de las fichas (`antigravity-cli` de mise) | en la PC | `make agy-pm` (o `agy --agent PM-HR-CLAVIS` a secas, sin pull ni listo) |
 | `try` / try-clone | clones rápidos con fecha en `/z-drive/tries` | `robert-flo/try-clone` | `pj-trio` y `ravn-sessionizer` lo usan para clonar lo que falta (por eso conviene pasarles la ruta) |
 | forkhub | auditoría de forks, bare clones y topología | `PJ-NIRI-rf-omarchy-workstation/scripts/forkhub/` (en transición) | se trabaja como parte de la workstation |
 

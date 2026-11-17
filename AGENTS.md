@@ -4,6 +4,7 @@ Home repo y meta-repo del trío PM/WK/RV del **ecosistema PJ-CLAVIS** para Curso
 
 ## Qué hay acá
 - `proyecto.yml`: los datos del proyecto (repos, specs en orden, notas, extras). Lo llenás vos; lo valida el esquema de pj-template.
+- `onboarding.yml`: lo propio del proyecto para el PM, el WK y el RV (misión, lo que no tocan, reglas, primeros pasos, cómo prueba el WK, qué exige el RV). Lo escribe `./pj onboard`; para cambiarlo, `./pj onboard` otra vez (muestra lo que hay y pregunta qué cambiar).
 - Todo lo demás (reglas, fichas, plantillas, skills, scripts) lo trae `./pj` desde `robert-flo/pj-template` al SHA de `template_ref`, en `.pj/`, y genera `.agents/` y `.cursor/`. Nada de eso se versiona ni se edita a mano. Cómo funciona: `.pj/tpl/docs/pj-template.md`.
 - Extras conservados a mano (`extras:` de `proyecto.yml`): `CLAUDE.md`, `HR-CLAVIS.code-workspace` y `docs/agents/` (configuración de las skills de ingeniería).
 - `.trio/`: handoffs de `pj-trio` (`.trio/<ticket>/`), se commitean.
@@ -14,8 +15,10 @@ Home repo y meta-repo del trío PM/WK/RV del **ecosistema PJ-CLAVIS** para Curso
 | Carpeta | Repo | Rama base | Rol |
 | :--- | :--- | :--- | :--- |
 | `.` | `robert-flo/HR-CLAVIS` | `master` | Home repo: punto único de entrada del trío. |
+| `PJ-NIRI-rf-omarchy-workstation/` | `robert-flo/PJ-NIRI-rf-omarchy-workstation` | `master` | workstation: vault de arquitectura, ADRs, workflows y proyectos (forkhub vive ahí hasta extraerse). |
+| `rf-dotfiles/` | `robert-flo/rf-dotfiles` | `master` | dotfiles: chezmoi SSoT y `packages.json`. |
 
-Los repos que supervisa el trío se suman en el onboarding del PM (`repos:` de `proyecto.yml`, hoy vacío) y se agregan a esta tabla. `./pj clonar` los clona adentro (ignorados por git). Tras clonar este repo: `./pj listo` (o `./pj listo --abrir`); instala hooks para que cada `git pull` regenere solo. Después: `agy --agent PM-HR-CLAVIS`, o abrí la carpeta en Cursor.
+Los repos que supervisa el trío salen del onboarding del PM (`repos:` de `proyecto.yml`, `./pj onboard`). `./pj clonar` los clona adentro (ignorados por git). Tras clonar este repo: `./pj listo` (o `./pj listo --abrir`); instala hooks para que cada `git pull` regenere solo. Después: `agy --agent PM-HR-CLAVIS`, o abrí la carpeta en Cursor. Para repetir todo desde cero: `./pj clean` (`--onboarding` rehace también la entrevista).
 
 ---
 

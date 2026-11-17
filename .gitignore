@@ -4,6 +4,7 @@
 
 # Worktrees locales
 .wt-*/
+*-wt-*/
 *-worktree*/
 
 # Temporales y logs
@@ -26,4 +27,6 @@ __pycache__/
 /.pj/
 /.agents/
 /.cursor/
+/PJ-NIRI-rf-omarchy-workstation/
+/rf-dotfiles/
 # <<< HR-CLAVIS: repos (generado) <<<

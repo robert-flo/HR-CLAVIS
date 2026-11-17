@@ -1,0 +1,33 @@
+# Onboarding del trío de HR-CLAVIS: lo propio del proyecto que reciben PM, WK y RV en su ficha.
+# Lo escribe `./pj onboard` (entrevista); se puede editar a mano y correr `./pj`.
+# hecho vacío = onboarding sin hacer. Esquema: schema/onboarding.schema.json de pj-template.
+version: 1
+hecho: "2026-11-16"
+mision: "Home Repo central del ecosistema PJ-CLAVIS (Workstation, Dotfiles, Forkhub, Workflows) y meta-repo del trío PM/WK/RV-HR-CLAVIS: el PM de acá es la única puerta de entrada a todos los repos del proyecto."
+no_tocar:
+  - "Nunca hacer commit directo a `master` en producción: usar rama auxiliar / worktree → PR → rebase → merge → limpiar rama."
+  - "Sin trailers `Co-authored-by` ni atribución automática a agentes en commits."
+  - "Nunca abrir PRs hacia `StatIndet` (no acepta PRs generados con IA)."
+  - "Zona temporal efímera: `/zt/` (prohibido mantener trabajo permanente aquí)."
+reglas_proyecto:
+  - "Rama por defecto de repositorios propios: `master` (nunca `main`)."
+  - "Rama de trabajo en forks propios: `personal`."
+  - "Toda automatización debe ser 100% reproducible e idempotente (`make converge`, `chezmoi apply`)."
+  - "La única puerta a `/` es `pacman` vía `[omarchy-personal]` (ADR 0001 / ADR 0002)."
+  - "Bare clones y worktrees activos: `/z/bare/<repo>.git` y `/z/repos/<repo>/` (`ravn-git-bare-clone`)."
+  - "Experimentos rápidos: `/z-drive/tries/` (`~/Work/tries`, `try-clone`)."
+  - "Ver la especificación completa en `/z/vaults/PJ-NIRI-rf-omarchy-workstation/08 - AI Developer Workflows/08.3 - Topologia Canonica de Repositorios, Worktrees y GitHub Workflows.md`."
+primeros_pasos:
+  - "leer `README.md` y `AGENTS.md` de este meta-repo y de `PJ-NIRI-rf-omarchy-workstation`, `rf-dotfiles`"
+  - "revisar los issues abiertos de cada repo (`gh issue list`) y proponerte por cuál empezar"
+wk:
+  como_probar:
+    - "en el meta-repo: `./pj check` da «todo bien»"
+    - "en `PJ-NIRI-rf-omarchy-workstation`: `make audit`, `make test-idempotence`, `make test-secrets` en verde, con la salida pegada en el PR"
+    - "en `rf-dotfiles`: `chezmoi diff` sin sorpresas antes de `chezmoi apply`, y aplicado de verdad en la máquina"
+    - "cada criterio de aceptación con su prueba corrida de verdad en esta máquina y la salida o captura en el PR"
+rv:
+  exige:
+    - "en `PJ-NIRI-rf-omarchy-workstation`: `shellcheck` limpio y `set -euo pipefail` en cada script que se toque"
+    - "ningún commit con `Co-authored-by` ni firma o trailer de agente"
+    - "que lo de «cómo prueba el WK» esté corrido de verdad en el PR; si no, BLOQUEO"

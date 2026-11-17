@@ -3,9 +3,17 @@
 proyecto: "HR-CLAVIS"           # nombre del trío: PM-<proyecto>, WK-<proyecto>, RV-<proyecto>
 area: "home repo del ecosistema PJ-CLAVIS — punto único de entrada del trío a todos sus repos"
 rama_base: "master"             # rama de los PR finales
-template_ref: "3ab9413d5ee537aa71683ad3e35bd11065c36f01"   # SHA de robert-flo/pj-template; lo sube el PR de sync
+template_ref: "1c0de616033514d818135ac2b4adedd188147770"   # SHA de robert-flo/pj-template; lo sube el PR de sync
 # Repos hijos. dir = carpeta local, ignorada en .gitignore. Se llenan en el onboarding del PM.
-repos: []
+repos:
+  - dir: "PJ-NIRI-rf-omarchy-workstation"
+    repo: "robert-flo/PJ-NIRI-rf-omarchy-workstation"
+    rama: "master"
+    nota: "workstation (Vault de arquitectura, ADRs, workflows y proyectos)"
+  - dir: "rf-dotfiles"
+    repo: "robert-flo/rf-dotfiles"
+    rama: "master"
+    nota: "dotfiles (Chezmoi SSoT y `packages.json` para `niri`, `niri-classic`, `omarchy`)"
 #  - dir: "rf-ejemplo"
 #    repo: "robert-flo/ejemplo"
 #    rama: "master"
@@ -15,7 +23,7 @@ specs: []
 notas: |
   Home repo (Home Repo Pattern de aihero) del ecosistema PJ-CLAVIS: workstation, dotfiles, forkhub,
   workflows. El PM de acá es la única puerta de entrada y opera sobre todos los repos que se
-  clonan adentro (repos:, vacío hasta el onboarding). Rama por defecto master (nunca main), nada
+  clonan adentro (repos:, los llena ./pj onboard). Rama por defecto master (nunca main), nada
   directo a master: rama auxiliar o worktree, PR, rebase, merge y limpiar rama. Regla propia: los
   commits van sin trailers Co-authored-by ni atribución a agentes.
   Nunca PRs hacia StatIndet. La única puerta a / es pacman vía [omarchy-personal].

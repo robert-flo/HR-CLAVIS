@@ -74,11 +74,27 @@ La lista canónica es `repos:` de `proyecto.yml` (la llena `./pj onboard`); `./p
 
 - workstation (vault de arquitectura, ADRs, workflows y proyectos): `PJ-NIRI-rf-omarchy-workstation/`, rama `master`. Clonar desde https://github.com/robert-flo/PJ-NIRI-rf-omarchy-workstation si falta. Leé su `AGENTS.md` primero.
 - dotfiles (Chezmoi SSoT y `packages.json` para `niri`, `niri-classic`, `omarchy`): `rf-dotfiles/`, rama `master`. Clonar desde https://github.com/robert-flo/rf-dotfiles si falta. Leé su `AGENTS.md` primero.
+- pj-template (plantilla única de tríos PM/WK/RV para Cursor y agy): `pj-template/`, rama `main`. Clonar desde https://github.com/robert-flo/pj-template si falta. Leé su `AGENTS.md` primero.
+- fo-herdr-sessionizer (fork de herdr-sessionizer: fzf sobre workspaces y zoxide): `fo-herdr-sessionizer/`, rama `main`. Clonar desde https://github.com/robert-flo/fo-herdr-sessionizer si falta.
+- ravn-sessionizer (sessionizer para herdr: workspaces, repos, `pj-*`, agentes y tríos): `ravn-sessionizer/`, rama `main`. Clonar desde https://github.com/robert-flo/ravn-sessionizer si falta. Leé su `AGENTS.md` primero.
+- ravn-sessionizer-arch (paquete Arch de `ravn-sessionizer`): `ravn-sessionizer-arch/`, rama `main`. Clonar desde https://github.com/robert-flo/ravn-sessionizer-arch si falta.
+- ravn-git-bare-clone-arch (paquete Arch de `ravn-git-bare-clone`): `ravn-git-bare-clone-arch/`, rama `main`. Clonar desde https://github.com/robert-flo/ravn-git-bare-clone-arch si falta.
+- ravn-git-bare-clone (launcher y runtime modular de `ravn-git-bare-clone`, Arquetipo A): `ravn-git-bare-clone/`, rama `main`. Clonar desde https://github.com/robert-flo/ravn-git-bare-clone si falta. Leé su `AGENTS.md` primero.
+- ravn-trio (trío PM/WK/RV local en herdr, Arquetipo A): `ravn-trio/`, rama `main`. Clonar desde https://github.com/robert-flo/ravn-trio si falta. Leé su `AGENTS.md` primero.
+- ravn-trio-arch (paquete Arch de `ravn-trio` / `pj-trio`): `ravn-trio-arch/`, rama `main`. Clonar desde https://github.com/robert-flo/ravn-trio-arch si falta.
 
 | Repo | Qué es | Cómo se prueba (de `onboarding.yml` §wk.como_probar) | Lo que exige el RV (§rv.exige) |
 | --- | --- | --- | --- |
 | `PJ-NIRI-rf-omarchy-workstation` | El hub: vault de Obsidian con la arquitectura por capas de la estación (00–08), ADRs, `assets/system/` (espejo de `/etc`), scripts y `forkhub` (en transición a su propio repo). | `make audit`, `make test-idempotence`, `make test-secrets` en verde, con la salida en el PR | `shellcheck` limpio y `set -euo pipefail` en cada script que se toque |
 | `rf-dotfiles` | Monorepo chezmoi: dotfiles de todos los usuarios de la estación y el manifiesto único de paquetes `.chezmoidata/packages.json`. | `chezmoi diff` sin sorpresas antes de `chezmoi apply`, y aplicado de verdad en la máquina | — |
+| `pj-template` | Plantilla única de tríos PM/WK/RV para Cursor y agy (molde de este Home Repo). | — | — |
+| `fo-herdr-sessionizer` | Fork de herdr-sessionizer (`fzf` sobre workspaces y zoxide). | — | — |
+| `ravn-sessionizer` | Sessionizer para herdr (workspaces, repos, `pj-*`, agentes y tríos). | — | — |
+| `ravn-sessionizer-arch` | Paquete Arch de `ravn-sessionizer`. | — | — |
+| `ravn-git-bare-clone-arch` | Paquete Arch de `ravn-git-bare-clone`. | — | — |
+| `ravn-git-bare-clone` | Launcher y runtime modular de `ravn-git-bare-clone` (Arquetipo A). | — | — |
+| `ravn-trio` | Trío PM/WK/RV local en herdr (Arquetipo A). | — | — |
+| `ravn-trio-arch` | Paquete Arch de `ravn-trio` (`pj-trio`). | — | — |
 
 **Alcance (decisión de Roberto del 2026-11-16, ADR 0027 del CEO con su enmienda):**
 - HR-CLAVIS es la única puerta del ecosistema: su trío **trabaja** la workstation y rf-dotfiles, no solo los mira.
@@ -91,8 +107,6 @@ La lista canónica es `repos:` de `proyecto.yml` (la llena `./pj onboard`); `./p
 - `08 - AI Developer Workflows/08.8 - Cómo funciona el trío local (PM-WK-RV, pj-trio, herdr).md`: el trío en herdr, con sus desfases conocidos.
 
 **Otros repos (punteros, no los supervisa el trío):** se leen si una tarea los necesita; un cambio en ellos es otro proyecto y se escala a Roberto.
-- pj-template (el molde de este repo): `.pj/tpl/` al SHA de `template_ref`. Cambios: issue en `robert-flo/pj-template`.
-- ravn-trio (`pj-trio`), ravn-sessionizer, ravn-git-bare-clone: ver §6.
 - pj-omarchy (meta-workspace de Omarchy y del canal `[omarchy-personal]`): `/z/pj-omarchy` en la PC.
 - forkhub (forks, bare clones y worktrees; en transición): `PJ-NIRI-rf-omarchy-workstation/scripts/forkhub/`; ver `proyectos/forkhub.md` del vault.
 - nvims (suite Neovim): `/z/nvims`. Experimentos: `/z-drive/tries` (`~/Work/tries`). Fuentes de forks del escritorio: `/opt/src`.

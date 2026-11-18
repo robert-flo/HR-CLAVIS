@@ -25,13 +25,41 @@ HR-CLAVIS es el **Home Repo** del ecosistema PJ-CLAVIS, según el [Home Repo Pat
 - un solo lugar donde corren los agentes;
 - cambios que cruzan varios repos desde una misma sesión, con un solo tablero.
 
-**Cómo lo adaptamos:**
-- **Un trío fijo** vive acá: `PM-HR-CLAVIS`, `WK-HR-CLAVIS` y `RV-HR-CLAVIS`. **Roberto solo habla con el PM**, que es la única puerta de entrada a todos los repos del proyecto.
-- **La mentalidad del PM** es la del patrón: mira todos los repos juntos, junta los hechos solo (filesystem, git, `gh`) y le trae a Roberto **decisiones**, no preguntas que podía contestar leyendo. No programa: convierte pedidos en specs y tickets y los sigue hasta el merge.
+**Cómo lo adaptamos (La Jerarquía de Dos Niveles):**
+- **Nivel 1: El PM Orquestador vive acá.** Roberto habla **únicamente con el PM-HR-CLAVIS**, que es la única puerta de entrada a todos los repos del proyecto. Su regla de oro: **el PM Orquestador no programa, no compila y no ejecuta tests pesados**. Si ejecutara todo en su propia sesión, saturaría su memoria y ventana de contexto en pocas horas. Su rol es el de **Director de Orquesta**: mira todos los repos juntos, junta los hechos, convierte pedidos en specs y tickets `ready-for-agent` con dependencias DAG, y despacha la ejecución.
+- **Nivel 2: Workspaces aislados en herdr con contexto limpio.** Para implementar cada ticket, el orquestador no anida subagentes en su sesión: despacha workspaces independientes en `herdr` con `pj-trio`, donde cada trío (`pm`, `wk`, `rv`) o rol oneshot (`os`) arranca con la memoria 100% limpia para esa tarea puntual.
 - **Los repos hijos se clonan adentro** del Home Repo y quedan ignorados por git (la variante «clonarlos adentro y gitignorearlos» del patrón). El código, la historia, los issues propios y el `AGENTS.md` de cada repo se quedan en su repo.
 - **Las reglas y las skills no se copian a mano:** HR-CLAVIS es un **hijo de `robert-flo/pj-template` en modo dependencia**. Versiona solo sus datos (`proyecto.yml`, `onboarding.yml`) y unos pocos archivos a mano. Todo lo demás lo trae `./pj` al SHA fijo de `template_ref`.
 
 ## 2. Arquitectura
+
+```mermaid
+flowchart TD
+    subgraph NIVEL_1["NIVEL 1: Home Repo Central (HR-CLAVIS)"]
+        H["Roberto (Human-in-the-Loop)"] <-->|Habla solo con| PMO["PM Orquestador (PM-HR-CLAVIS)<br/>• Sesión principal en /z-home-repos/HR-CLAVIS<br/>• Foto completa del ecosistema<br/>• Sizing de tareas & Desglose DAG<br/>• NUNCA compila ni ejecuta código pesado"]
+        PMO -->|Despacha tríos independientes| HD["herdr (Multiplexor de terminales)"]
+        PMO -->|Supervisa reactivamente con| FL["pj-trio fleet / pj-trio watch"]
+    end
+
+    subgraph NIVEL_2["NIVEL 2: Workspaces Aislados en herdr (Contexto Limpio)"]
+        subgraph WS_TRIO["Workspace: trio HR-CLAVIS/<repo>#<ticket>"]
+            SPM["Sub-PM (trio-pm-prompt)"] -->|herdr agent prompt| WK["WK (Worker)<br/>Worktree en repos/<repo>/<ticket>"]
+            WK -->|PR con ## Merge Danger| RV["RV (Revisor)<br/>Worktree efímero rv-<pr>"]
+            RV -->|APRUEBO sha| SPM
+            SPM -->|Merge Gate: two-way + Low| AM["Auto-merge + Clean"]
+            SPM -->|Merge Gate: one-way / High| HR["needs-roberto (Merge Humano)"]
+        end
+
+        subgraph WS_OS["Workspace: os HR-CLAVIS/<repo>#<ticket>"]
+            OS["Rol OS (Oneshot)<br/>• Ticket trivial ready-for-agent<br/>• 1 panel de terminal<br/>• Implementa, prueba, PR y auto-merge"]
+        end
+    end
+
+    AM -->|Actualiza estado| STAT[".trio/<clave>/status.json"]
+    HR -->|Actualiza estado| STAT
+    OS -->|Actualiza estado| STAT
+    STAT -->|Leído por| FL
+```
 
 ```text
 robert-flo/pj-template @ template_ref        (reglas, fichas, skills, scripts, Makefile)
@@ -50,22 +78,22 @@ robert-flo/pj-template @ template_ref        (reglas, fichas, skills, scripts, M
 Los clones de arriba son **para leer** (el PM y el contexto de los agentes). Nadie trabaja en ellos: todo worktree de trabajo sale de `ravn-git-bare-clone` (§6.4, ADR 0019 de pj-template):
 
 ```
-/z/bare/<repo>.git                 ← bare (ravn-git-bare-clone clone <dueño>/<repo>)
-/z/repos/<repo>/                   ← raíz de worktrees (.git apunta al bare; la rama por defecto queda libre)
-/z/repos/<repo>/<n>-<slug>/        ← worktree del WK, rama issue/<n>-<slug>
-/z/repos/<repo>/rv-<pr>/           ← worktree del RV para probar un PR (rama local rv/<pr>, sin subir)
+.bares/<repo>.git                  ← bare local del Home Repo (o /z/bare/<repo>.git)
+repos/<repo>/                      ← raíz de worktrees del Home Repo (o /z/repos/<repo>)
+repos/<repo>/<n>-<slug>/           ← worktree del WK u OS, rama issue/<n>-<slug>
+repos/<repo>/rv-<pr>/              ← worktree del RV para probar un PR (rama local rv/<pr>, sin subir)
 ```
 
 - **Tres capas.** pj-template es el molde (reglas y herramientas comunes a todos los Home Repos). HR-CLAVIS pone los datos del proyecto. Cada repo hijo pone su código y sus reglas propias.
 - **Por qué lo generado no se versiona.** agy y Cursor leen `.agents/` y `.cursor/` del disco, pero las fichas citan reglas y skills que tampoco estarían al clonar: versionar solo las fichas daría un clon a medias. `./pj` lo deja todo en disco, igual byte a byte en cualquier máquina porque sale de un SHA fijo. Así el diff de un PR de acá es solo lo que escribió alguien, y actualizar el template es cambiar una línea (`template_ref`). Consecuencia: **en GitHub no se ven los agentes, y está bien.**
 - **Dónde vive el clon** (en la PC de Roberto): `/z-home-repos/HR-CLAVIS`, rama `master`. Los repos hijos, adentro, en la carpeta `dir` de `proyecto.yml`.
-- **Cada plataforma ve el mismo trío:**
+- **Cada plataforma ve el mismo equipo:**
 
-| Plataforma | PM | WK y RV | Cómo se arranca |
+| Plataforma | PM Orquestador | WK, RV y OS | Cómo se arranca |
 | --- | --- | --- | --- |
-| agy | `.agents/agents/PM-HR-CLAVIS.md` (enlazado en `~/.gemini/config/agents`) | `WK-`/`RV-HR-CLAVIS.md`; el PM los lanza con `invoke_subagent` | `make agy-pm` desde la raíz (pull + `./pj listo` + agy vía mise) |
-| Cursor (IDE o CLI) | regla `alwaysApply` `.cursor/rules/pm-hr-clavis.mdc`: el chat **es** el PM | subagentes `.cursor/agents/{wk,rv}-hr-clavis.md` | abrí `HR-CLAVIS.code-workspace` o corré `cursor-agent` en la raíz |
-| herdr (`pj-trio`) | pestaña `pm` con agy | pestañas `wk` y `rv` | `pj-trio … <ticket>` (§6.2) |
+| agy | `.agents/agents/PM-HR-CLAVIS.md` (enlazado en `~/.gemini/config/agents`) | `WK-`, `RV-`, `OS-HR-CLAVIS.md`; el PM los lanza con `invoke_subagent` o `pj-trio` en herdr | `make agy-pm` (arranque formal completo) o `make pm` (arranque rápido al instante) |
+| Cursor (IDE o CLI) | regla `alwaysApply` `.cursor/rules/pm-hr-clavis.mdc`: el chat **es** el PM | subagentes `.cursor/agents/{wk,rv,os}-hr-clavis.md` | abrí `HR-CLAVIS.code-workspace` o corré `cursor-agent` en la raíz |
+| herdr (`pj-trio`) | pestaña `pm` con agy | pestañas `wk` y `rv` (trío) o panel único `os` (oneshot) | `pj-trio … <ticket> [--oneshot]` (§6.2) |
 | Claude Code | `CLAUDE.md` importa este archivo | — | no tiene fichas propias; leé las de `.agents/agents/` |
 
 ## 3. Los repos que supervisa [HR-CLAVIS]
@@ -174,21 +202,26 @@ Si cambia lo que el PM supervisa (un repo nuevo, otra rama, otra forma de probar
 
 El `Makefile` de HR-CLAVIS es solo de atajos y lo manda pj-template (`plantillas/hijo/Makefile`, ADR 0020): cada target llama a `./pj`, la lógica vive ahí. Los demás targets (`humo`, `clonar`, `generar`…) son del `Makefile` de pj-template y se corren con `./pj <target>`.
 
-**El comando de todos los días es `make agy-pm`** (desde `/z-home-repos/HR-CLAVIS`): `git pull --rebase --autostash` → `./pj listo` → y solo si terminó bien, `MISE_MINIMUM_RELEASE_AGE=0 mise use -g --quiet antigravity-cli` y `exec mise x antigravity-cli -- agy --dangerously-skip-permissions --agent PM-HR-CLAVIS`. Es el wrapper `agy` de la workstation con el pull y el listo adelante. `make agy-wk` / `make agy-rv` abren el WK o el RV; `ARGS="…"` se pasa tal cual a agy. Sin mise usa el `agy` del PATH.
+**Atajos de inicio del trío:**
+- **Arranque completo (con pull y regeneración):** `make agy-pm` (o `agy-wk`, `agy-rv`, `agy-os`). Hace `git pull --rebase --autostash` → `./pj listo` → y solo si terminó bien, arranca agy vía mise con `--agent <ROL>-HR-CLAVIS`.
+- **Arranque rápido (modo `--solo`):** `make pm`, `make wk`, `make rv`, `make os`. Saltan el pull y la regeneración pesada para abrir el agente en segundos cuando el repo ya está listo.
 
-| Atajo | Equivale a |
-| --- | --- |
-| `make agy-pm` / `agy-wk` / `agy-rv` | `./pj agy pm` / `wk` / `rv` |
-| `make listo` | `./pj listo` |
-| `make onboard` | `./pj onboard` (`ARGS="--mostrar"`…) |
-| `make clean` | `./pj clean` (`ARGS="--onboarding"`) |
-| `make check` | `./pj check` |
-| `make` | lista los atajos |
+| Atajo rápido | Atajo completo | Equivale a |
+| --- | --- | --- |
+| `make pm` | `make agy-pm` | `./pj agy pm [--solo]` |
+| `make wk` | `make agy-wk` | `./pj agy wk [--solo]` |
+| `make rv` | `make agy-rv` | `./pj agy rv [--solo]` |
+| `make os` | `make agy-os` | `./pj agy os [--solo]` |
+| `make listo` | — | `./pj listo` |
+| `make onboard` | — | `./pj onboard` (`ARGS="--mostrar"`…) |
+| `make clean` | — | `./pj clean` (`ARGS="--onboarding"`) |
+| `make check` | — | `./pj check` |
+| `make` | — | lista los atajos disponibles |
 
 | Comando | Qué hace | Idempotente |
 | --- | --- | --- |
 | `./pj listo [--abrir]` | Todo de una después de un clone o un pull: `git pull --rebase --autostash` → trae el template → genera → instala hooks → ofrece `./pj onboard` si falta (solo con terminal) → `agy` → `clonar` → `check`. Imprime `make agy-pm`; `--abrir` arranca el PM como `./pj agy pm`. | sí |
-| `./pj agy [pm\|wk\|rv] [args…]` | `./pj listo` y, si pasó, abre ese agente (pm por defecto) en agy vía mise con `--dangerously-skip-permissions --agent <ROL>-HR-CLAVIS args…`. Si `listo` falla no abre nada. Es lo que corre `make agy-pm`. | sí |
+| `./pj agy [pm\|wk\|rv\|os] [--solo] [args…]` | Abre ese agente (pm por defecto) en agy vía mise con `--dangerously-skip-permissions --agent <ROL>-HR-CLAVIS args…`. Si no lleva `--solo`, corre `./pj listo` primero. | sí |
 | `./pj` | Solo trae pj-template al `template_ref` y genera `.agents/` y `.cursor/`. | sí |
 | `./pj onboard` | La entrevista del onboarding: junta los hechos (`proyecto.yml`, README, este archivo, los repos y su stack), propone cada campo (Enter acepta), resume y escribe `onboarding.yml` y `repos:` solo con tu sí. Si ya está hecho, lo muestra y pregunta qué cambiar. `--mostrar` solo imprime; `--si` y `--respuestas F` sin preguntas; `--rehacer` la repite entera. | sí |
 | `./pj clean [--onboarding]` | Deshace `./pj listo` para repetirlo: borra `.pj/`, lo generado (solo lo del manifiesto), los hooks `# pj-hook`, los enlaces de agy de este clon y los clones **sin nada local**. Un clon con cambios, ignorados, worktrees, stash, commits o tags sin subir se queda y sale con 1. `--onboarding` además deja `onboarding.yml` y `repos:` sin hacer (se niega si tienen cambios sin commitear). | sí |
@@ -203,22 +236,35 @@ El `Makefile` de HR-CLAVIS es solo de atajos y lo manda pj-template (`plantillas
 
 ### 6.2 `pj-trio` y `trio-status` (el trío en herdr)
 
-- **Qué hace:** abre en herdr un workspace con tres pestañas a pantalla completa (`pm`, `wk`, `rv`) para **un ticket**, arranca cada rol con `agy --agent <ROL>-HR-CLAVIS` y le manda al PM el arranque (`trio-pm-prompt.md`) renderizado en `.trio/<clave>/kickoff.md`. Desde ahí el PM le manda el trabajo al WK y al RV con `herdr agent prompt` y espera sus entregas.
-- **Dónde vive:** código en `robert-flo/ravn-trio`, que es la **fuente de verdad** de cómo corre el trío en herdr (ADR 0016 de pj-template). Paquete Arch `ravn-trio` desde `robert-flo/ravn-trio-arch`, publicado en `[omarchy-personal]`. Se instala con `pacman` (está en `packages.personal` de rf-dotfiles). Deja `/usr/bin/pj-trio` y, en `/usr/share/ravn/trio/`, `trio-status`, `trio-pm-prompt.md`, `trio.conf.example` y el plugin de herdr. Verificá la versión con `pacman -Q ravn-trio` (el PM mergea tras el `APRUEBO` desde la v0.1.8).
+- **Qué hace:** abre en herdr un workspace con pestañas a pantalla completa para resolver un ticket en un entorno aislado con contexto limpio.
+  - **Modo Trío clásico:** abre 3 pestañas (`pm`, `wk`, `rv`). El sub-PM local orquesta la ejecución técnica del ticket.
+  - **Modo Oneshot (`pj-trio --oneshot` o `-1`):** abre un workspace de una sola pestaña (`os`) con el rol `OS-HR-CLAVIS` para tickets de bajo riesgo (`Door: two-way` + `Blast Radius: Low`), ejecutando el ciclo completo hasta el auto-merge.
+- **Dónde vive:** código en `robert-flo/ravn-trio`, paquete Arch `ravn-trio` desde `robert-flo/ravn-trio-arch` en `[omarchy-personal]`. Instala `/usr/bin/pj-trio`, `/usr/bin/trio-status` (en `PATH` desde v0.1.13), templates y plugins de herdr.
 - **Cómo se usa con HR-CLAVIS:**
 
 ```bash
+# Lanzar un trío completo para un ticket de un repo hijo
 pj-trio /z-home-repos/HR-CLAVIS <ticket> --repo <dir del repo hijo> [--base <rama del spec>]
+
+# Lanzar en modo oneshot para un ticket trivial
+pj-trio /z-home-repos/HR-CLAVIS <ticket> --repo <dir del repo hijo> --oneshot
+
+# Inspeccionar el estado de la flota de tríos en herdr
+pj-trio fleet
+
+# Monitorear la flota en tiempo real
+pj-trio watch
 ```
 
-  - Desde `ravn-trio` 0.1.9, `pj-trio HR-CLAVIS …` encuentra el Home Repo por nombre: `$PJ_TRIO_ROOTS` por defecto es `/z-drive/tries /z-home-repos /z/repos`. La ruta completa también sirve.
-  - Con `--repo`, el `<ticket>` es un issue **del repo hijo** (`gh issue view <ticket> -R <dueño>/<repo>`), los agentes abren en ese clon y el Home Repo se les suma con `--add-dir`. Sin `--repo`, el ticket es de HR-CLAVIS y el trabajo cae en el Home Repo mismo.
-  - `--base <rama del spec>` para un sub-issue: el worktree sale de `origin/<rama>`, el PR va contra ella, no pasa por el RV y lo mergea el WK (§7.3). Sin `--base` (trivial) sale de `origin/HEAD`, lo revisa el RV y lo mergea el PM.
-  - El worktree lo crea el PM con `ravn-git-bare-clone clone <dueño>/<repo>` y `git-create-worktree -r /z/repos/<repo> -B <base> -b issue/<ticket>-<slug> -p '' <ticket>-<slug>` (§6.4).
-  - `--dry-run` muestra todo sin aplicarlo; `--print-kickoff` imprime el arranque para pegarlo a mano.
-- **Nombres:** workspace `trio HR-CLAVIS/<miembro>#<ticket>`. Agentes `pm|wk|rv-<miembro corto>-<ticket>` (sin prefijos `rf-`, `fo-`, `pj-domina-`; ≤ 32 caracteres).
-- **Handoff:** `.trio/<clave>/` en el Home Repo, con `<clave>` = `<repo hijo>-<ticket>` (con `--repo`) o `<ticket>`. Lleva `plan.md` (PM), `wk.md` (WK), `rv.md` (RV) y `status.json`. Se commitea en HR-CLAVIS y nunca se duplica en el repo hijo.
-- **`trio-status`** no está en el `PATH`: el PM lo llama con la ruta que le da el arranque (o `pj-trio status`) y **solo escribe** `status.json` (`en-curso` | `hecho` | `needs-roberto`); no es un visor. Para ver el estado: `cat .trio/<clave>/status.json`.
+- **Protocolo de comunicación entre subagentes (`PM -> WK -> RV -> PM`):**
+  1. **Kickoff:** El sub-PM prepara `.trio/<clave>/plan.md`, crea el worktree con `ravn-git-bare-clone` y envía el prompt de trabajo al WK mediante `herdr agent prompt wk-<clave> "..."`.
+  2. **Implementación:** El WK trabaja exclusivamente en su worktree aislado, corre pruebas reales (`onboarding.yml` §como_probar), ejecuta `/code-review`, sube el PR draft con `/pr` (incluyendo la sección obligatoria `## Merge Danger`), escribe `.trio/<clave>/wk.md` y notifica al sub-PM vía `herdr agent prompt pm-<clave> "..."`.
+  3. **Revisión:** El sub-PM verifica `wk.md` y solicita revisión al RV vía `herdr agent prompt rv-<clave> "..."`. El RV levanta su worktree `rv-<pr>`, corre la verificación estricta (`onboarding.yml` §exige), emite su veredicto en GitHub (`APRUEBO <sha>` o `BLOQUEO`) y en `.trio/<clave>/rv.md`, y notifica al sub-PM.
+  4. **Merge Gate y Cierre:** Con `APRUEBO <sha>`, el PM valida el Merge Gate:
+     - **Merge Gate automático:** Si el PR clasifica como `Door: two-way` Y `Blast Radius: Low`, el PM ejecuta `gh pr merge --squash --delete-branch --match-head-commit <sha>`, elimina worktrees, actualiza `.trio/<clave>/status.json` a `hecho` y cierra el workspace en herdr.
+     - **Merge Gate protegido:** Si el PR clasifica como `Door: one-way` o `Blast Radius != Low`, el PR queda en `ready-to-merge` con `needs-roberto` para que Roberto haga el merge manual.
+- **Inspección sin polling:** El PM orquestador de HR-CLAVIS no corre bucles de espera. Consulta el estado consolidado con `pj-trio fleet` o lee directamente `.trio/<clave>/status.json`.
+- **Handoff:** `.trio/<clave>/` en el Home Repo, con `<clave>` = `<repo hijo>-<ticket>` (con `--repo`) o `<ticket>`. Lleva `plan.md`, `wk.md`, `rv.md` y `status.json`. Se commitea en HR-CLAVIS.
 - **Config:** `trio.conf` por capas (`/usr/share/ravn/trio/trio.conf` → `/zt/ravn/trio/trio.conf` → `.trio/trio.conf`; `PJ_TRIO_CONFIG` reemplaza todo). Fija qué programa corre cada rol y la identidad de git.
 
 ### 6.3 `ravn-sessionizer` (el «sessionizer» de herdr)
@@ -227,21 +273,22 @@ pj-trio /z-home-repos/HR-CLAVIS <ticket> --repo <dir del repo hijo> [--base <ram
 - **Dónde vive:** código en `robert-flo/ravn-sessionizer`, paquete `ravn-sessionizer` desde `robert-flo/ravn-sessionizer-arch` en `[omarchy-personal]`. Es una reimplementación propia, inspirada en `salkhalil/herdr-sessionizer` (del que hay un fork `robert-flo/fo-herdr-sessionizer` registrado en forkhub).
 - **Con HR-CLAVIS:** desde ravn-sessionizer#19 reconoce como proyectos `pj-*` y `HR-*` (`SES_PJ_REGEX='^(pj|hr)-'`) y busca en `/z-drive/tries`, `/z-home-repos` y `/z/repos`, así que HR-CLAVIS aparece como proyecto y `ri` lanza su trío. Si tu `/etc/ravn/sessionizer.conf` es viejo y lo editaste a mano, pacman deja el nuevo como `.pacnew`: copiá `SES_ROOTS` y `SES_PJ_REGEX` de ahí.
 
-### 6.4 `ravn-git-bare-clone` y sus atajos (`git-bare-clone`, `git-create-worktree`, `git-issue-worktree`)
+### 6.4 `ravn-git-bare-clone` y sus atajos (`git-bare-clone`, `git-create-worktree`, `git-issue-worktree`, `ravn-wt`)
 
-- **Qué hace:** clona un repo en modo bare en `$BARE_HOME/<repo>.git` (por defecto `/z/bare`) y arma worktrees en `$WORKTREES_HOME/<repo>/<rama>` (por defecto `/z/repos`), dejando libre la rama por defecto para que varios agentes trabajen en paralelo. `sync` crea los worktrees que falten; `create <nombre>` y `issue <n> <slug>` crean un worktree nuevo. `git-bare-clone`, `git-create-worktree` y `git-issue-worktree` son atajos de compatibilidad.
-- **Dónde vive:** `robert-flo/ravn-git-bare-clone`, paquete `ravn-git-bare-clone` en `[omarchy-personal]` (`/opt/ravn-git-bare-clone`, comandos en `/usr/bin`). Hay versiones viejas de los mismos scripts en `robert-flo/pj-domina-rf-tools/bin/` (las instala su `install.sh` en `~/bin`) y en repos archivados.
-- **Con HR-CLAVIS:** **es la única forma de crear worktrees** (ADR 0019 de pj-template; fleet ADR 0011: nunca `git worktree` a mano). `ravn-git-bare-clone clone <dueño>/<repo>` es idempotente y prepara `/z/bare/<repo>.git` y `/z/repos/<repo>/`. Si el issue vive en el repo del código, `git-issue-worktree -r /z/repos/<repo> -B <base> <n> <slug>`; si vive en HR-CLAVIS, `git-create-worktree -r /z/repos/<repo> -B <base> -b issue/<n>-<slug> -p '' <n>-<slug>`. Los dos dejan `/z/repos/<repo>/<n>-<slug>` en la rama `issue/<n>-<slug>`. Al terminar, `git -C /z/repos/<repo> worktree remove <ruta>`. `./pj clonar` sigue clonando con `gh repo clone` dentro del Home Repo, pero esos clones son para leer. `./pj clean` nunca toca `/z/bare` ni `/z/repos`.
+- **Qué hace:** clona un repo en modo bare en `$BARE_HOME/<repo>.git` (por defecto `/z/bare`, o `.bares/` si se ejecuta dentro de un Home Repo) y arma worktrees en `$WORKTREES_HOME/<repo>/<rama>` (por defecto `/z/repos`, o `repos/` dentro de un Home Repo), dejando libre la rama por defecto para que varios agentes trabajen en paralelo sin colisionar. `sync` crea los worktrees que falten; `create <nombre>` y `issue <n> <slug>` crean un worktree nuevo.
+- **Versión actual:** `v0.2.1` (paquete Arch `ravn-git-bare-clone` en `[omarchy-personal]`, instalado en `/opt/ravn-git-bare-clone` con binarios en `/usr/bin`). Desde v0.2.1 cuenta con detección automática de Home Repos, tests automatizados de idempotencia en CI y el alias CLI `ravn-wt`.
+- **Con HR-CLAVIS:** **es la única forma permitida de crear worktrees** (ADR 0019 de pj-template; fleet ADR 0011: nunca `git worktree add` a mano). `ravn-git-bare-clone clone <dueño>/<repo>` es idempotente y prepara las estructuras canónicas. Si el issue vive en el repo del código, `git-issue-worktree -r /z/repos/<repo> -B <base> <n> <slug>`; si vive en HR-CLAVIS, `git-create-worktree -r /z/repos/<repo> -B <base> -b issue/<n>-<slug> -p '' <n>-<slug>`. Los dos dejan `/z/repos/<repo>/<n>-<slug>` en la rama `issue/<n>-<slug>`. Al terminar, `git -C /z/repos/<repo> worktree remove <ruta>`. Los clones dentro de HR-CLAVIS son solo para lectura; `./pj clean` nunca toca `/z/bare` ni `/z/repos`.
 
 ### 6.5 Las demás
 
 | Herramienta | Qué es | Dónde vive / cómo se instala | Uso en HR-CLAVIS |
 | --- | --- | --- | --- |
 | `gh` | CLI de GitHub, logueado como `robert-flo` | paquete `github-cli` | issues, PRs, veredictos, merges, clones; también da las credenciales para bajar pj-template |
-| `herdr` | gestor de workspaces de terminal para agentes | paquete de `[omarchy-personal]` (≥ 0.9.5) | donde corre `pj-trio` |
-| `agy` | Antigravity, el motor de las fichas (`antigravity-cli` de mise) | en la PC | `make agy-pm` (o `agy --agent PM-HR-CLAVIS` a secas, sin pull ni listo) |
-| `try` / try-clone | clones rápidos con fecha en `/z-drive/tries` | `robert-flo/try-clone` | `pj-trio` y `ravn-sessionizer` lo usan para clonar lo que falta (por eso conviene pasarles la ruta) |
+| `herdr` | gestor de workspaces de terminal para agentes | paquete de `[omarchy-personal]` (≥ 0.9.5) | donde corre `pj-trio` en sus modalidades trío y oneshot |
+| `agy` | Antigravity, el motor de las fichas (`antigravity-cli` de mise) | en la PC | `make agy-pm` / `make pm` (o `agy --agent PM-HR-CLAVIS`) |
+| `try` / try-clone | clones rápidos con fecha en `/z-drive/tries` | `robert-flo/try-clone` | `pj-trio` y `ravn-sessionizer` lo usan para clonar lo que falta |
 | forkhub | auditoría de forks, bare clones y topología | `PJ-NIRI-rf-omarchy-workstation/scripts/forkhub/` (en transición) | se trabaja como parte de la workstation |
+| `sync-arch-package-secrets.sh` | herramienta de sincronización de secretos de empaquetado Arch | `PJ-NIRI-rf-omarchy-workstation/scripts/secrets/` | sincroniza `GPG_PRIVATE_KEY` y `REPO_DEPLOY_KEY` en repos `*-arch` desatendidamente |
 
 ## 7. Cómo se opera
 
@@ -249,7 +296,7 @@ Las reglas completas de cada paso están en `.agents/reglas/` (`pm.md` §Tu fluj
 
 ### 7.1 Dónde va cada issue [HR-CLAVIS]
 
-- Todo pedido empieza con un issue en **`robert-flo/HR-CLAVIS`** (tablero, specs). Antes de crear, se busca (`gh issue list --search`).
+- Todo pedido empieza con un issue en **`robert-flo/HR-CLAVIS`** (tablero global, specs). Antes de crear, se busca (`gh issue list --search`).
 - Si el cambio cae en un repo hijo, el ticket que implementa el WK vive **en ese repo** (es lo que lee `pj-trio --repo`), enlazado al issue de HR-CLAVIS del que cuelga. Un spec que cruza repos lleva uno en cada repo, enlazados (`comun.md` §Reglas de GitHub).
 - El PR cierra el ticket de su repo (`Closes #N`) y nombra el issue de HR-CLAVIS.
 
@@ -257,8 +304,9 @@ Las reglas completas de cada paso están en `.agents/reglas/` (`pm.md` §Tu fluj
 
 Lo usa el PM en `pm.md` §Tu flujo 3. Viene de `robert-flo/Template`; es una convención local encima del flujo de Matt Pocock, no de sus skills.
 
-1. **Trivial:** cambios de configuración simples (`.gitignore`, plantillas de variables), erratas en docs, subidas menores de dependencias. Sin grill ni spec: un issue `ready-for-agent`, `implement` y `code-review`, un PR a `master`.
-2. **Engineering:** todo lo que agrega, cambia o quita lógica, scripts, targets de build, librerías, contratos de comportamiento o arquitectura. Flujo completo, sin saltos.
+1. **Engineering (Trío completo):** todo lo que agrega, cambia o quita lógica de negocio, scripts complejos, contratos de comportamiento, pipelines o arquitectura. Requiere flujo completo: `grill-with-docs` → `to-spec` → `to-tickets` → Trío PM/WK/RV en herdr (`pj-trio`).
+2. **Trivial Estándar (WK + RV + PM):** cambios con impacto en múltiples archivos o que requieren validación cruzada pero sin spec largo (refactor menor, sync de dependencias, scripts de soporte). Issue `ready-for-agent` → Trío `pj-trio` → PR con revisión de RV y merge del PM.
+3. **Oneshot (Bajo riesgo / Auto-merge):** cambios atómicos de bajo riesgo (docs, correcciones tipográficas, atajos, configs simples, bumps de versión directos) clasificados como `Door: two-way` Y `Blast Radius: Low`. Se resuelven con un agente único (`make os` en local o `pj-trio --oneshot` en herdr), quien crea worktree, prueba, corre `code-review`, sube PR y auto-mergea al validar el Merge Gate.
 
 El PM **dice en voz alta** la clasificación y el camino antes de empezar, para que Roberto pueda vetarla. Si duda, Engineering.
 
@@ -266,58 +314,75 @@ El PM **dice en voz alta** la clasificación y el camino antes de empezar, para 
 
 ```mermaid
 flowchart TD
-  A[Pedido de Roberto al PM] --> B[ro-restate-goals: ¿es eso?]
+  A[Pedido de Roberto al PM Orquestador] --> B[ro-restate-goals: ¿es eso?]
   B --> C[Issue en HR-CLAVIS: buscar o crear needs-triage]
   C --> D{Task Sizing}
   D -- Engineering --> E[grill-with-docs]
   E --> F[to-spec: issue con spec + rama del spec número-slug]
-  F --> G[to-tickets: sub-issues ready-for-agent, Roberto aprueba]
-  G --> H[WK: worktree por sub-issue, PR draft, code-review]
-  H --> I[WK mergea cada sub-issue a la rama del spec]
-  I --> J[PM abre el PR final rama del spec → master]
-  D -- Trivial --> T[Issue ready-for-agent → WK: PR a master]
-  J --> K{RV prueba el head exacto}
-  T --> K
-  K -- BLOQUEO --> H
-  K -- APRUEBO sha --> L[PM: gh pr merge --squash --delete-branch --match-head-commit sha]
-  L --> M[PM limpia etiquetas y le pasa a Roberto PR, veredicto, SHA y validación manual]
+  F --> G[to-tickets: sub-issues ready-for-agent]
+  G --> H[pj-trio: despacho a workspace herdr]
+  H --> I[Sub-PM coordina WK y RV en worktrees aislados]
+  I --> J[WK mergea sub-issues a rama del spec]
+  J --> K[PM abre PR final rama del spec → master]
+  D -- Trivial Estándar --> L[pj-trio: workspace completo PM/WK/RV]
+  L --> M[WK prepara worktree y PR draft a master]
+  M --> K
+  D -- Oneshot --> N[pj-trio --oneshot: OS en workspace efímero]
+  N --> O[OS crea worktree, prueba, abre PR con Merge Danger]
+  K --> P{RV prueba head exacto}
+  P -- BLOQUEO --> I
+  P -- APRUEBO sha --> Q{Merge Gate}
+  O --> Q
+  Q -- Door: two-way AND Blast: Low --> R[Auto-merge squash + delete branch]
+  Q -- Door: one-way OR Blast: != Low --> S[ready-to-merge + needs-roberto: Merge Humano]
+  R --> T[Cierre de workspace, worktree remove y reporte a Roberto]
+  S --> T
 ```
 
 - **Rama del spec** (ADR 0006 de pj-template): `<número>-<slug>`, la crea el PM desde la rama por defecto al publicar el spec, sin commits suyos. Los PRs del WK van a ella; su único PR final va a `master`.
-- **Worktree del WK** (`wk.md` paso 3, ADR 0019 de pj-template): uno nuevo por issue, siempre, con `ravn-git-bare-clone` (§6.4) en `/z/repos/<repo>/<n>-<slug>`, rama `issue/<n>-<slug>`. `<base>` es `origin/<rama del spec>` en un sub-issue y `origin/HEAD` en un trivial. En herdr lo crea el PM. Al terminar, `git -C /z/repos/<repo> worktree remove <ruta>`. Nunca `git worktree add` a mano ni trabajo en los clones del Home Repo.
-- **PR:** body con la skill `pr` (`## Summary`, `## Evidence`, `## Merge Danger`), como draft hasta que CI esté verde y `code-review` limpio. Las capturas van a `robert-flo/assets`, nunca commiteadas en el repo.
-- **RV:** prueba el PR de verdad en un worktree `/z/repos/<repo>/rv-<pr>` (`git-create-worktree -N -r /z/repos/<repo> -B origin/<rama-del-PR> -b rv/<pr> -p '' rv-<pr>`) y comenta en el PR `APRUEBO <sha>` o `BLOQUEO` con archivo y línea. No programa, no mergea, no cambia etiquetas.
-- **Merge** (ADR 0018 de pj-template = la regla de los tríos de fleet, igual en todas las plataformas; no hay otra):
-  - **Sub-issue → rama del spec:** lo mergea el **WK**, con CI verde y `code-review` limpio, sin RV (fleet ADR 0011: «merges its own PR into the spec branch when everything passes»).
-  - **PR final (rama del spec → `master`) y trivial:** lo revisa el RV y lo mergea el **PM**, solo tras el `APRUEBO <sha>` sobre ese head exacto, sin orden de Roberto (fleet `CIRCUITO.md` C6: «Con `APRUEBO` sobre el head exacto, el PM mergea con `gh pr merge --squash --delete-branch --match-head-commit`. Si el head se movió, vuelve a revisión.»; C9; ADR 0014 de pj-template):
+- **Worktree del WK / OS** (`wk.md` paso 3, ADR 0019 de pj-template): uno nuevo por issue, siempre con `ravn-git-bare-clone` (§6.4) en `/z/repos/<repo>/<n>-<slug>`, rama `issue/<n>-<slug>`. `<base>` es `origin/<rama del spec>` en un sub-issue y `origin/HEAD` en un trivial. Al terminar, `git -C /z/repos/<repo> worktree remove <ruta>`. Nunca `git worktree add` a mano ni trabajo en los clones del Home Repo.
+- **PR:** body obligatorio con la skill `pr` conteniendo tres secciones estrictas:
+  1. `## Summary`: descripción concisa y bullets del cambio.
+  2. `## Evidence`: prueba real ejecutada con comandos y salidas completas.
+  3. `## Merge Danger`: clasificación de reversibilidad (`Door: two-way` | `one-way`) y alcance del impacto (`Blast Radius: Low` | `Medium` | `High`).
+- **RV:** prueba el PR de verdad en un worktree aislado `/z/repos/<repo>/rv-<pr>` (`git-create-worktree -N -r /z/repos/<repo> -B origin/<rama-del-PR> -b rv/<pr> -p '' rv-<pr>`) y comenta en el PR `APRUEBO <sha>` o `BLOQUEO` con archivo y línea. No programa, no mergea, no cambia etiquetas.
+- **Merge Gate Canónico:**
+  - **Auto-merge:** Aplica únicamente si el veredicto es `APRUEBO <sha>` y el bloque `## Merge Danger` certifica `Door: two-way` Y `Blast Radius: Low`. El PM (o el OS) ejecuta:
     `gh pr merge <N> --squash --delete-branch --match-head-commit <sha>`.
-  - **El RV nunca mergea** (fleet `templates/ficha-reviewer.md`: «no mergeás, no cerrás PRs»). El WK nunca mergea a `master`.
+  - **Escalación humana (`needs-roberto`):** Si `Door: one-way` o `Blast Radius != Low`, el PR no se auto-mergea; se etiqueta `ready-to-merge` y se solicita confirmación explícita de Roberto antes del merge.
+- **Sub-issue → rama del spec:** lo mergea el **WK**, con CI verde y `code-review` limpio, sin pasar por RV.
 - **Hecho:** issue cerrado por el merge y sin etiquetas de triage; ramas y worktrees borrados.
 - **El PR de sync** (`pj-template/sync-*`, lo abre la CI) es un PR más: pasa por el RV y lo mergea el PM.
-- **Etiquetas** (`schema/etiquetas.tsv` de pj-template; la CI las crea en cada sync): `needs-triage`, `needs-info` (con `ON HOLD: <motivo>`), `spec`, `ready-for-agent`, `ready-to-merge`, `wontfix`.
+- **Etiquetas:** `needs-triage`, `needs-info` (con `ON HOLD: <motivo>`), `spec`, `ready-for-agent`, `ready-to-merge`, `wontfix`.
 
 ### 7.4 En herdr
 
-Con `pj-trio` (§6.2) el circuito es el mismo, por ticket. El PM escribe `plan.md`, crea el worktree con `ravn-git-bare-clone`, le manda el trabajo al WK y espera `wk.md`. Después le pasa la revisión al RV y espera `rv.md` con `APRUEBO <sha>` o `BLOQUEO`. Con el `APRUEBO`, mergea y cierra: `status.json` en `hecho`, commit y push de `.trio/`, `git -C /z/repos/<repo> worktree remove`. Con `--base` (sub-issue) no hay paso RV: el WK mergea su PR a la rama del spec y el PM lo confirma en GitHub y cierra. Un paso que falla se reintenta **una** vez; al segundo fallo queda `needs-roberto` con aviso por `notify-send`.
+Con `pj-trio` (§6.2) el trabajo técnico se despacha a un workspace independiente:
+1. **Lanzamiento:** El orquestador ejecuta `pj-trio <pj> <ticket> --repo <repo> [--base <base>]` o `pj-trio <pj> <ticket> --repo <repo> --oneshot`.
+2. **Supervisión sin bucles:** El PM orquestador inspecciona con `pj-trio fleet` o monitorea interactivamente con `pj-trio watch`.
+3. **Flujo interno:** Los agentes se comunican entre sí mediante `herdr agent prompt <id> "..."` y dejan sus handoffs en `.trio/<clave>/`.
+4. **Cierre:** Al finalizar con éxito (`status.json` en `hecho`), se remueven los worktrees en `/z/repos/<repo>/`, se commitea el handoff `.trio/` en HR-CLAVIS y se destruye el workspace temporal en herdr (`herdr kill-workspace <id>`). Si falla dos veces consecutivas, pasa a `needs-roberto` y dispara `notify-send`.
 
 ## 8. Reglas duras
 
 Estas no se negocian en ningún repo del proyecto. Su dueño es `comun.md` §Git y §Tu PC (y `onboarding.yml`); acá se resumen para que nadie las pase por alto.
 
-- Identidad de git en todo commit: `Roberto Flores <25asab015@ujmd.edu.sv>`.
-- Ningún commit lleva trailer ni firma de agente: ni `Co-authored-by`, ni `agente: … · plataforma: …`, ni ninguna otra atribución, en ningún repo.
-- Antes de trabajar y antes de cada push: `git pull --rebase --autostash`.
-- Nunca `git push --force` ni `--force-with-lease`: si la historia publicada no cuadra, rama nueva y PR nuevo.
-- Nunca commits directos a la rama por defecto ni a la rama de un spec: rama auxiliar o worktree, PR, revisión, merge y limpiar la rama.
-- La rama por defecto de los repos propios es `master`; en los forks propios se trabaja en `personal`.
-- Nunca abrir PRs, ramas ni pushes hacia upstreams (`omacom/omarchy` ni ningún otro); nunca PRs hacia `StatIndet`.
-- Secretos nunca en texto plano: ni en archivos, ni en la línea de comandos, ni en un chat, ni en un log. `PJ_TEMPLATE_TOKEN` nunca se imprime.
-- La única puerta a `/` es `pacman` vía `[omarchy-personal]`.
-- Toda automatización tiene que ser reproducible e idempotente: correrla una o diez veces deja el mismo estado.
-- Los arreglos van en el origen (el repo dueño), nunca como parche manual en la máquina.
-- Los temporales en la PC van en `~/.cache/ravn-piloto/`; `/zt/` es zona efímera y nada permanente vive ahí.
-- Nunca tocar `~/Work/tries/_boveda` (la bóveda cifrada) ni su sincronización.
-- Nunca se editan a mano `.agents/`, `.cursor/`, `.pj/`, `./pj` ni el workflow: se cambian en pj-template.
+- **Identidad de git en todo commit:** `Roberto Flores <25asab015@ujmd.edu.sv>`.
+- **Cero trailers ni firmas de agentes:** ningún commit lleva trailer ni firma: ni `Co-authored-by`, ni `agente: … · plataforma: …`, ni ninguna otra atribución en ningún repo.
+- **Pull previo:** antes de trabajar y antes de cada push: `git pull --rebase --autostash`.
+- **Nunca push force:** nunca `git push --force` ni `--force-with-lease`: si la historia publicada no cuadra, rama nueva y PR nuevo.
+- **Nunca commit directo a master:** nunca commits directos a la rama por defecto ni a la rama de un spec: rama auxiliar o worktree, PR, revisión, merge y limpiar la rama.
+- **Ramas base:** la rama por defecto de los repos propios es `master`; en los forks propios se trabaja en `personal`.
+- **Nunca PRs hacia upstream ni StatIndet:** nunca abrir PRs, ramas ni pushes hacia upstreams (`omacom/omarchy` ni ningún otro); nunca PRs hacia `StatIndet`.
+- **Secretos:** nunca en texto plano (archivos, cli, chat, logs). Para sincronizar secretos en repos de empaquetado Arch (`*-arch`), seguir estrictamente el runbook canónico `pj-template/docs/runbook-secrets-empaquetado-arch.md` usando `PJ-NIRI-rf-omarchy-workstation/scripts/secrets/sync-arch-package-secrets.sh`.
+- **La única puerta a `/` es `pacman` vía `[omarchy-personal]`.**
+- **Registro en `CAMBIOS.md`:** todo paquete Arch en su repo `*-arch` debe reflejar sus versiones y cambios en `CAMBIOS.md` antes del release.
+- **Bloque obligatorio `## Merge Danger`:** todo PR sin excepción debe incluir reversibilidad (`Door: two-way|one-way`) y radio de explosión (`Blast Radius: Low|Medium|High`) para evaluar el Merge Gate.
+- **Idempotencia:** toda automatización tiene que ser reproducible e idempotente: correrla una o diez veces deja el mismo estado.
+- **Arreglos en el origen:** van en el repo dueño, nunca como parche manual en la máquina.
+- **Temporales:** van en `~/.cache/ravn-piloto/`; `/zt/` es zona efímera y nada permanente vive ahí.
+- **Bóveda intacta:** nunca tocar `~/Work/tries/_boveda` (la bóveda cifrada) ni su sincronización.
+- **Archivos protegidos:** nunca se editan a mano `.agents/`, `.cursor/`, `.pj/`, `./pj` ni el workflow: se cambian en pj-template.
 
 ## 9. Dónde vive cada verdad (y quién manda si chocan)
 

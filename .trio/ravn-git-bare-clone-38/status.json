@@ -1,7 +1,10 @@
 {
   "ticket": "ravn-git-bare-clone-38",
-  "estado": "en-curso",
-  "paso": "plan",
+  "estado": "hecho",
+  "paso": "cierre",
   "error": "",
-  "timestamp": "2026-11-18T22:31:46-06:00"
+  "timestamp": "2026-11-18T22:40:06-06:00",
+  "pr": "https://github.com/robert-flo/ravn-git-bare-clone/pull/11",
+  "head": "d1ed6fffb8bb5bf0eeb9b239cfb4e6076ab83e56",
+  "merge_sha": "8c80c5bca94fb3052b3f9df672f9b4aab2181cb5"
 }

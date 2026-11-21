@@ -1,0 +1,11 @@
+{
+  "ticket": "pj-template-66",
+  "estado": "hecho",
+  "paso": "cierre",
+  "error": "",
+  "timestamp": "2026-11-21T17:52:26-06:00",
+  "pr": "https://github.com/robert-flo/pj-template/pull/73",
+  "head": "49eddc1f6faa1d9f079560e5a935f65e80b4d046",
+  "merge_danger": "two-way / Low",
+  "merge_sha": "d290d0e0885acdc1cb0efcc329edee19a1bdc850"
+}

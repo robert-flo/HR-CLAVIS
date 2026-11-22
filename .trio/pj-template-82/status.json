@@ -1,7 +1,11 @@
 {
   "ticket": "pj-template-82",
-  "estado": "en-curso",
-  "paso": "plan",
+  "estado": "hecho",
+  "paso": "cierre",
   "error": "",
-  "timestamp": "2026-11-21T21:08:47-06:00"
+  "timestamp": "2026-11-21T21:15:32-06:00",
+  "intentos": 2,
+  "pr": "https://github.com/robert-flo/pj-template/pull/85",
+  "head": "cdfb8617ff7835ab612711504500bd1392f429f2",
+  "merge_sha": "1702a79a2c300b1c61637fe3cda719f980b713d3"
 }

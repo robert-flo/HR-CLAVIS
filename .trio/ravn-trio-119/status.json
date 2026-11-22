@@ -1,7 +1,11 @@
 {
   "ticket": "ravn-trio-119",
-  "estado": "en-curso",
-  "paso": "plan",
+  "estado": "hecho",
+  "paso": "cierre",
   "error": "",
-  "timestamp": "2026-11-22T10:55:44-06:00"
+  "timestamp": "2026-11-22T11:05:50-06:00",
+  "intentos": 2,
+  "pr": "https://github.com/robert-flo/ravn-trio/pull/62",
+  "head": "a8ab6555062c86b87b4676c5c4bd83e62653a635",
+  "merge_sha": "1a2816d393346f3b7308a0b3c14077c4c78ff68f"
 }

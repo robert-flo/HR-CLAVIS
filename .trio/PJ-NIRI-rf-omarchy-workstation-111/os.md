@@ -3,9 +3,9 @@
 - **Issue origen:** `robert-flo/HR-CLAVIS#111` (`[workstation] Agregar guía de keybindings y scripts de herdr en 08 - AI Developer Workflows`)
 - **PR:** https://github.com/robert-flo/PJ-NIRI-rf-omarchy-workstation/pull/170
 - **Rama / Head SHA:** `issue/111-herdr-guia` @ `c8661946df1d0957bfe2a3fe3e3235ebc3c59c75`
-- **Worktree:** `/z-home-repos/HR-CLAVIS/repos/PJ-NIRI-rf-omarchy-workstation/111-herdr-guia`
+- **Merge SHA:** `f8e6788eca428dd21123f1ac852766f05732dee8`
 - **Merge Danger:** `Door: two-way` / `Blast Radius: Low`
-- **Estado:** `needs-roberto` (PR etiquetado con `ready-to-merge`, sin auto-merge)
+- **Estado:** `hecho` (mergeado por Roberto; cierre completado y worktree eliminado)
 
 ## Qué se hizo
 

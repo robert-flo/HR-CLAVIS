@@ -1,0 +1,10 @@
+{
+  "ticket": "PJ-NIRI-rf-omarchy-workstation-111",
+  "estado": "needs-roberto",
+  "paso": "merge",
+  "error": "",
+  "timestamp": "2026-11-22T00:48:22-06:00",
+  "pr": "https://github.com/robert-flo/PJ-NIRI-rf-omarchy-workstation/pull/170",
+  "head": "c8661946df1d0957bfe2a3fe3e3235ebc3c59c75",
+  "merge_danger": "two-way / Low (CI rojo preexistente y make test-secrets interactivo)"
+}

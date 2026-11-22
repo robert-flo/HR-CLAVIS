@@ -1,7 +1,11 @@
 {
   "ticket": "93",
-  "estado": "en-curso",
-  "paso": "plan",
+  "estado": "hecho",
+  "paso": "cierre",
   "error": "",
-  "timestamp": "2026-11-21T23:25:06-06:00"
+  "timestamp": "2026-11-21T23:29:51-06:00",
+  "pr": "https://github.com/robert-flo/HR-CLAVIS/pull/107",
+  "head": "a6bdf10851fac20b1d3ff24d8c94bbe8a554b26e",
+  "merge_sha": "67d4ceb08a3cbc62d83fed6029694a0bc1e0aa40",
+  "merge_danger": "two-way / Low"
 }

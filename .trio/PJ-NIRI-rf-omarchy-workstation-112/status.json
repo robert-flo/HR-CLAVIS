@@ -1,7 +1,12 @@
 {
   "ticket": "PJ-NIRI-rf-omarchy-workstation-112",
-  "estado": "en-curso",
-  "paso": "plan",
+  "estado": "hecho",
+  "paso": "cierre",
   "error": "",
-  "timestamp": "2026-11-22T00:58:05-06:00"
+  "timestamp": "2026-11-22T02:09:03-06:00",
+  "intentos": 2,
+  "pr": "https://github.com/robert-flo/PJ-NIRI-rf-omarchy-workstation/pull/171",
+  "head": "ee2b04207fbd292e40fd3bab554a8dd2fbc7b2d7",
+  "merge_sha": "5ba6fae98205bf605e317333cc8a985951bd2805",
+  "merge_danger": "two-way / Low"
 }

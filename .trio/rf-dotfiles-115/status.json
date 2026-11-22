@@ -1,7 +1,10 @@
 {
   "ticket": "rf-dotfiles-115",
-  "estado": "en-curso",
-  "paso": "plan",
+  "estado": "hecho",
+  "paso": "cierre",
   "error": "",
-  "timestamp": "2026-11-22T10:03:43-06:00"
+  "timestamp": "2026-11-22T10:10:55-06:00",
+  "pr": "https://github.com/robert-flo/rf-dotfiles/pull/99",
+  "head": "4bd543c2d182f810f10a1d74d2cae576b21317b8",
+  "merge_sha": "86de56347582902ce608c8a55339f05c068f4d75"
 }

@@ -1,7 +1,11 @@
 {
   "ticket": "ravn-sessionizer-126",
-  "estado": "en-curso",
-  "paso": "plan",
+  "estado": "hecho",
+  "paso": "cierre",
   "error": "",
-  "timestamp": "2026-11-22T13:22:32-06:00"
+  "timestamp": "2026-11-22T13:30:08-06:00",
+  "pr": "https://github.com/robert-flo/ravn-sessionizer/pull/20",
+  "head": "befb2284cb155712c8ee5caed77ba828cf46c68b",
+  "merge_sha": "e2686d88909f94abc1317d912625427efcb71e7b",
+  "merge_danger": "two-way / Low"
 }

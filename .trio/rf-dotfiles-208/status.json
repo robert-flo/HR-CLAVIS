@@ -3,9 +3,10 @@
   "estado": "hecho",
   "paso": "cierre",
   "error": "",
-  "timestamp": "2026-11-24T16:17:11-06:00",
+  "timestamp": "2026-11-24T16:29:08-06:00",
   "pr": "https://github.com/robert-flo/rf-dotfiles/pull/151",
   "head": "a2d2370b9721d6d45c408d013601b01972684cd5",
   "merge_sha": "daccf38890f8bd5b1bf2bbe29f2ae93fa1bc4eb0",
-  "merge_danger": "two-way / Low"
+  "merge_danger": "two-way / Low",
+  "merge": "daccf38890f8bd5b1bf2bbe29f2ae93fa1bc4eb0"
 }

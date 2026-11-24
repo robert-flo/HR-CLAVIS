@@ -4,7 +4,7 @@
 - **Head:** `d3de3dea0d8b16558b1a4a0059da7dba30ef9390`
 - **Rama:** `issue/186-sumar-hr-kodigo` → `main`
 - **Worktree:** `/z-home-repos/HR-CLAVIS/repos/pj-template/186-hr-kodigo-family`
-- **Merge:** no. Queda para Roberto.
+- **Merge:** ejecutado por Roberto (`add0cfd9cc85f1f067e057792d4b588d2d26c0fd`).
 
 ## Qué quedó
 

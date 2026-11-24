@@ -17,17 +17,17 @@ Ticket [robert-flo/HR-CLAVIS#157](https://github.com/robert-flo/HR-CLAVIS/issues
 Antes, con 9 días 14 horas y 4 días 23 horas, en `9aabbe2`:
 
 ```text
-  Cursor: 52% usado · reset en 9d | Grok Bot: 0% usado · reset en 4d
+  Cursor: 52% usado · reset en 9d | <bot>: 0% usado · reset en 4d
   Balde Auto: 56% usado. | Balde API: 0% usado.
 ```
 
-Después:
+Después (el nombre del segundo reloj va en el script; acá queda `<bot>`):
 
 ```text
-  📅 Cursor: 52% usado · reset en 9d 14h | 🤖 Grok Bot: 0% usado · reset en 4d 23h
+  📅 Cursor: 52% usado · reset en 9d 14h | 🤖 <bot>: 0% usado · reset en 4d 23h
   Balde Auto: 56% usado. | Balde API: 0% usado.
-  📅 Cursor: 52% usado · reset en 3h 12m | 🤖 Grok Bot: 0% usado · reset en 40m
-  📅 Cursor: 1% usado · reset en 1d 0h | 🤖 Grok Bot: 0% usado · reset en 0m
+  📅 Cursor: 52% usado · reset en 3h 12m | 🤖 <bot>: 0% usado · reset en 40m
+  📅 Cursor: 1% usado · reset en 1d 0h | 🤖 <bot>: 0% usado · reset en 0m
 ```
 
 No imprime `reset en 9d` ni `reset en 5d`. Los baldes no llevan emoji.

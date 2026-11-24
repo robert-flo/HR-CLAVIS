@@ -1,8 +1,12 @@
 {
   "ticket": "rf-dotfiles-173",
-  "estado": "en-curso",
-  "paso": "plan",
+  "estado": "hecho",
+  "paso": "cierre",
   "error": "",
-  "timestamp": "2026-11-24T00:24:58-06:00",
-  "session": "173-integrar-configuracion-de-zed-en-rf-dotfiles"
+  "timestamp": "2026-11-24T00:33:11-06:00",
+  "session": "173-integrar-configuracion-de-zed-en-rf-dotfiles",
+  "pr": "https://github.com/robert-flo/rf-dotfiles/pull/125",
+  "head": "195dee6926f59eae180819bf2c525ca4b8fa3033",
+  "merge_sha": "135c4f12584772340d07eaac2b2a630de54dc39d",
+  "merge_danger": "two-way / Low"
 }

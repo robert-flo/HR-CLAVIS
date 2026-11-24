@@ -1,0 +1,62 @@
+## niri-test: diff antes del primer apply (solo dolphinrc)
+diff --git a/.config/dolphinrc b/.config/dolphinrc
+diff --git a/02-install-system-tools.sh b/02-install-system-tools.sh
+diff --git a/install-brief-table.sh b/install-brief-table.sh
+
+## apply #1
+rc=0
+--- ~/.config/dolphinrc de niri-test tras apply #1
+[General]
+ShowStatusBar=Disabled
+
+[MainWindow]
+MenuBar=Disabled
+
+[MainWindow][Toolbar mainToolBar]
+IconSize=16
+
+[PlacesPanel]
+IconSize=16
+
+[PreviewSettings]
+Plugins=appimagethumbnail,audiothumbnail,comicbookthumbnail,cursorthumbnail,djvuthumbnail,ebookthumbnail,exrthumbnail,gsthumbnail,imagethumbnail,jpegthumbnail,kraorathumbnail,windowsexethumbnail,windowsimagethumbnail,opendocumentthumbnail,svgthumbnail,ffmpegthumbs
+
+## Dolphin (o el usuario) cambia una preferencia y añade su propia clave
+ShowStatusBar=Small
+Propio=1
+
+## apply #2
+rc=0
+ShowStatusBar=Small
+Propio=1
+
+## chezmoi diff y verify tras apply #2
+líneas de diff: 0
+verify rc=0
+
+## claves de HyDE / 2560x1080 / colores en lo sembrado
+coincidencias: 0
+
+## chezmoi diff en perfiles que NO son niri/Clavis: líneas nuevas de dolphinrc
+omarchy-test: 0
+nyxuri-test: 0
+niri-upstream: 0
+
+## archivos gestionados por perfil vs rama del spec
+clavis           > .config/dolphinrc 
+clavis-upstream  
+omarchy          
+nyxuri           
+
+## Capturas (Dolphin 26.08, XDG_CONFIG_HOME temporal con el dolphinrc aplicado por chezmoi --destination; sesión de niri)
+before.png          dolphinrc ausente: barra de estado visible ("1 folder, 4 files"), iconos por defecto
+statusbar-false.png dolphinrc con ShowStatusBar=false (valor del origen): la barra de estado SIGUE visible -> clave obsoleta
+after.png           dolphinrc sembrado (ShowStatusBar=Disabled, iconos 16): sin barra de estado, Lugares más compactos; miniaturas de png/pdf/mp4 presentes
+evidence-200/after-other.png  diálogo "Otra aplicación…" con el mismo tema (referencia para el veredicto)
+
+## Veredicto de apariencia (tema GTK MacTahoe-Dark)
+Se ve bien en lo visto: ventana principal y diálogo "Otra aplicación…" (fondo oscuro, selección, botones y bordes coherentes con el escritorio). No hace falta Kvantum; el veredicto cubre solo esas vistas (no se revisó el resto de diálogos ni la barra de menú abierta).
+
+## Notas honestas
+- [MainWindow] MenuBar=Disabled es defensivo: en 26.08 el menú ya nace oculto (before.png); es la clave que Dolphin escribe al alternar Ctrl+M dos veces.
+- Las miniaturas de png/pdf/mp4 aparecen igual antes y después: gsthumbnail se añade a la lista como respaldo para PDF, sin efecto visible demostrado en esta prueba.

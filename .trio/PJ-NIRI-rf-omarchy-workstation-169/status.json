@@ -1,8 +1,12 @@
 {
   "ticket": "PJ-NIRI-rf-omarchy-workstation-169",
-  "estado": "en-curso",
-  "paso": "plan",
+  "estado": "hecho",
+  "paso": "cierre",
   "error": "",
-  "timestamp": "2026-11-24T00:29:55-06:00",
-  "session": "169-spec-refactorizar-makefile-de-pj-niri-rf-oma"
+  "timestamp": "2026-11-24T00:45:09-06:00",
+  "session": "169-spec-refactorizar-makefile-de-pj-niri-rf-oma",
+  "pr": "https://github.com/robert-flo/PJ-NIRI-rf-omarchy-workstation/pull/174",
+  "head": "7ee54847e69a8ddc8503155f7736e34f2f7698d5",
+  "merge_sha": "a6612ede680451873c1d5fb110c8d69f0fd4f0c8",
+  "merge_danger": "two-way / Low"
 }

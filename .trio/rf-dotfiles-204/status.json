@@ -1,0 +1,10 @@
+{
+  "ticket": "rf-dotfiles-204",
+  "estado": "needs-roberto",
+  "paso": "merge",
+  "error": "",
+  "timestamp": "2026-11-24T13:57:13-06:00",
+  "pr": "https://github.com/robert-flo/rf-dotfiles/pull/149",
+  "head": "d4b12eb901fc5452df654babdd1b9a2884cf0f13",
+  "merge_danger": "two-way / Medium: --force pisa cambios locales; merge humano"
+}

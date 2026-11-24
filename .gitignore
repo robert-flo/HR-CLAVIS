@@ -1,6 +1,7 @@
 # Clones de repos hijos (los maneja clone-repos.sh)
 /rf-*/
 /fo-*/
+/pj-domina-rf-tools/
 
 # Worktrees locales
 .wt-*/

@@ -1,8 +1,12 @@
 {
   "ticket": "pj-template-170",
-  "estado": "en-curso",
-  "paso": "plan",
+  "estado": "hecho",
+  "paso": "cierre",
   "error": "",
-  "timestamp": "2026-11-24T00:30:06-06:00",
-  "session": "170-spec-modularizar-makefile-raiz-de-pj-templat"
+  "timestamp": "2026-11-24T07:28:52-06:00",
+  "session": "170-spec-modularizar-makefile-raiz-de-pj-templat",
+  "pr": "https://github.com/robert-flo/pj-template/pull/99",
+  "head": "306e9fe72e8377a40b51f625f17c80419f52a2e1",
+  "merge_sha": "b6e91528562804dcf369d3a66a5bfd8c8c3bf7c8",
+  "merge_danger": "two-way / Low"
 }

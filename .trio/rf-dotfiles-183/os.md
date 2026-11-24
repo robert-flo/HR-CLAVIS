@@ -8,12 +8,12 @@
 
 ## Cambio realizado
 En `dot_config/mimeapps.list` (`robert-flo/rf-dotfiles`):
-- `[Default Applications]`: agregados `x-scheme-handler/grokbot=grok-bot.desktop` y `x-scheme-handler/sand=grok-bot.desktop`.
-- `[Added Associations]`: agregados `x-scheme-handler/grokbot=grok-bot.desktop;` y `x-scheme-handler/sand=grok-bot.desktop;`.
+- `[Default Applications]`: agregados `x-scheme-handler/grok_bot=grok-app.desktop` y `x-scheme-handler/sand=grok-app.desktop`.
+- `[Added Associations]`: agregados `x-scheme-handler/grok_bot=grok-app.desktop;` y `x-scheme-handler/sand=grok-app.desktop;`.
 
 ## Evidencia de pruebas
-- `chezmoi diff --source=/z-home-repos/HR-CLAVIS/repos/rf-dotfiles/183-grokbot-mimeapps ~/.config/mimeapps.list`: mostró únicamente las 4 líneas nuevas.
-- `chezmoi apply --source=/z-home-repos/HR-CLAVIS/repos/rf-dotfiles/183-grokbot-mimeapps ~/.config/mimeapps.list`: aplicado correctamente y `chezmoi diff` posterior vacío.
-- `xdg-mime query default x-scheme-handler/grokbot` → `grok-bot.desktop`
-- `xdg-mime query default x-scheme-handler/sand` → `grok-bot.desktop`
+- `chezmoi diff --source=/z-home-repos/HR-CLAVIS/repos/rf-dotfiles/183-mimeapps ~/.config/mimeapps.list`: mostró únicamente las 4 líneas nuevas.
+- `chezmoi apply --source=/z-home-repos/HR-CLAVIS/repos/rf-dotfiles/183-mimeapps ~/.config/mimeapps.list`: aplicado correctamente y `chezmoi diff` posterior vacío.
+- `xdg-mime query default x-scheme-handler/grok_bot` → `grok-app.desktop`
+- `xdg-mime query default x-scheme-handler/sand` → `grok-app.desktop`
 - `code-review` (ejes Standards y Spec): ambos limpios, 0 hallazgos.

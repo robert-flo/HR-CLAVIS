@@ -1,0 +1,11 @@
+{
+  "ticket": "rf-dotfiles-210",
+  "estado": "hecho",
+  "paso": "cierre",
+  "error": "",
+  "timestamp": "2026-11-24T16:29:08-06:00",
+  "pr": "https://github.com/robert-flo/rf-dotfiles/pull/152",
+  "head": "bcd8784bb57ac7247ded6d71fbc132b0f4714d91",
+  "merge": "60c940c58ffdfab1ab8d86270a61b4d308a579e4",
+  "merge_danger": "two-way / Low"
+}

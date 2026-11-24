@@ -1,8 +1,12 @@
 {
   "ticket": "rf-dotfiles-165",
-  "estado": "en-curso",
-  "paso": "plan",
+  "estado": "hecho",
+  "paso": "cierre",
   "error": "",
-  "timestamp": "2026-11-24T00:22:51-06:00",
-  "session": "165-165-spec-integrar-configuracion-de-zsh-y-sta"
+  "timestamp": "2026-11-24T07:28:52-06:00",
+  "session": "165-165-spec-integrar-configuracion-de-zsh-y-sta",
+  "pr": "https://github.com/robert-flo/rf-dotfiles/pull/136",
+  "head": "c18e6c14f184490a5c4c3a687db893527bfa5429",
+  "merge_sha": "588939fbdc237f75434099e29deaf79d6af25d62",
+  "merge_danger": "two-way / Low"
 }

@@ -18,9 +18,11 @@ JSON de sesión Grok 4.7 256K Medium, contexto 42%, y caché con total 52, auto 
 
 ```text
 Grok 4.7 256K medium ▓▓▓▓░░░░░░ 42% /tmp/.../HR-CLAVIS ⎇ master
-  Cursor: 52% usado · reset en 9d | Grok Bot: 0% usado · reset en 5d
+  Cursor: 52% usado · reset en 9d | <bot>: 0% usado · reset en 5d
   Balde Auto: 56% usado. | Balde API: 0% usado.
 ```
+
+El segundo renglón usa el nombre del bot de la cuota, `usado` y `5d`, como en el prototipo del issue.
 
 No imprime `5h`, `ritmo`, `cuota grok` ni `Fin de ciclo`.
 

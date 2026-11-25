@@ -1,8 +1,12 @@
 {
   "ticket": "ravn-trio-224",
-  "estado": "en-curso",
-  "paso": "plan",
+  "estado": "hecho",
+  "paso": "cierre",
   "error": "",
-  "timestamp": "2026-11-24T23:22:49-06:00",
-  "session": "224-ravn-trio-estado-verdadero-de-agentes-en-fle"
+  "timestamp": "2026-11-24T23:45:51-06:00",
+  "session": "224-ravn-trio-estado-verdadero-de-agentes-en-fle",
+  "pr": "https://github.com/robert-flo/ravn-trio/pull/75",
+  "head": "2de2a91b3620531bfa0852d98eadaa26780652de",
+  "merge_sha": "ab864ae5e2bb4e585e05c03099d7e396d0154c61",
+  "merge_danger": "two-way / Low"
 }

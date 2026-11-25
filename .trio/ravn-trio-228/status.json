@@ -1,8 +1,12 @@
 {
   "ticket": "ravn-trio-228",
-  "estado": "en-curso",
-  "paso": "plan",
+  "estado": "hecho",
+  "paso": "cierre",
   "error": "",
-  "timestamp": "2026-11-25T01:05:44-06:00",
-  "session": "228-ravn-trio-lease-por-ticket-handoff.md-vivo-y"
+  "timestamp": "2026-11-25T01:27:18-06:00",
+  "session": "228-ravn-trio-lease-por-ticket-handoff.md-vivo-y",
+  "pr": "https://github.com/robert-flo/ravn-trio/pull/78",
+  "head": "232ea589a6ec39b90f0815fc45fd13c9437e4ea1",
+  "merge_sha": "0b968c63d6fbce72b8e97f069dbb37efd4d292f8",
+  "merge_danger": "two-way / Low"
 }

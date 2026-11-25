@@ -1,8 +1,12 @@
 {
   "ticket": "ravn-trio-231",
-  "estado": "en-curso",
-  "paso": "plan",
+  "estado": "hecho",
+  "paso": "cierre",
   "error": "",
-  "timestamp": "2026-11-25T01:44:57-06:00",
-  "session": "231-ravn-trio-pj-trio-watch-con-estado-real-y-al"
+  "timestamp": "2026-11-25T02:12:28-06:00",
+  "session": "231-ravn-trio-pj-trio-watch-con-estado-real-y-al",
+  "pr": "https://github.com/robert-flo/ravn-trio/pull/82",
+  "head": "b59d65a98a52f3f774c9f1fa739b054d4154f4ab",
+  "merge_sha": "5ea2eba013d843ce6593ef7ff5d3600bffe62323",
+  "merge_danger": "two-way / Low"
 }

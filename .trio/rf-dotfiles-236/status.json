@@ -1,13 +1,15 @@
 {
   "ticket": "rf-dotfiles-236",
-  "estado": "en-curso",
-  "paso": "rv",
+  "estado": "hecho",
+  "paso": "cierre",
   "error": "",
-  "timestamp": "2026-11-26T12:53:14-06:00",
+  "timestamp": "2026-11-26T13:55:50-06:00",
   "session": "236-spec-actualizador-horario-idempotente-de-oma",
   "branch": "236-omarchy-personal-updater",
   "pr": "https://github.com/robert-flo/rf-dotfiles/pull/175",
   "head": "982f8421d79f7126b93a1b52e2726e1cecfccf54",
-  "heartbeat_at": "2026-11-26T12:53:14-06:00",
-  "lease_expires_at": "2026-11-26T13:08:14-06:00"
+  "heartbeat_at": "2026-11-26T13:55:17-06:00",
+  "lease_expires_at": "2026-11-26T14:10:17-06:00",
+  "merge_sha": "1e7aec0a4363465f37caf4d5d1ef7f006a52d3b7",
+  "merge_danger": "two-way / Low"
 }

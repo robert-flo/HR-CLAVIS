@@ -1,0 +1,10 @@
+{
+  "ticket": "239",
+  "estado": "en-curso",
+  "paso": "wk",
+  "error": "",
+  "timestamp": "2026-11-26T17:47:07-06:00",
+  "session": "default",
+  "heartbeat_at": "2026-11-26T17:47:07-06:00",
+  "lease_expires_at": "2026-11-26T18:02:07-06:00"
+}

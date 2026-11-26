@@ -18,6 +18,7 @@
 ## Orden de ejecución (DAG)
 
 ### 1. `robert-flo/HR-CLAVIS#237` — Versionar actualizador `[omarchy-personal]`, unidades systemd y tests
+- **Estado:** COMPLETADO (PR `robert-flo/rf-dotfiles#167` squash-mergeado en `236-omarchy-personal-updater`).
 - **Bloqueado por:** ninguno (arranca primero).
 - **Alcance:**
   - Versionar en `rf-dotfiles`:
@@ -41,7 +42,8 @@
   - [ ] Sub-PR mergeado a `236-omarchy-personal-updater` en `robert-flo/rf-dotfiles`.
 
 ### 2. `robert-flo/HR-CLAVIS#238` — Desplegar actualizador `[omarchy-personal]` vía hook `run_onchange_` de Chezmoi
-- **Bloqueado por:** `robert-flo/HR-CLAVIS#237`.
+- **Worktree:** `/z-home-repos/HR-CLAVIS/repos/rf-dotfiles/238-omarchy-personal-hook` (rama `issue/238-omarchy-personal-hook`, base `236-omarchy-personal-updater`)
+- **Bloqueado por:** `robert-flo/HR-CLAVIS#237` (ya resuelto).
 - **Alcance:**
   - Agregar `run_onchange_after_04-install-omarchy-personal-updater.sh.tmpl` en `rf-dotfiles` para desplegar de forma idempotente:
     - `/usr/local/bin/omarchy-personal-update`

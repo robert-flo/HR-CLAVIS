@@ -1,0 +1,10 @@
+{
+  "ticket": "rf-dotfiles-236",
+  "estado": "en-curso",
+  "paso": "wk",
+  "error": "",
+  "timestamp": "2026-11-26T09:29:36-06:00",
+  "session": "236-spec-actualizador-horario-idempotente-de-oma",
+  "heartbeat_at": "2026-11-26T09:29:36-06:00",
+  "lease_expires_at": "2026-11-26T09:44:36-06:00"
+}

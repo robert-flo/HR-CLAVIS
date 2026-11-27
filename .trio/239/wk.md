@@ -74,5 +74,6 @@
 ## 3. Estado de la Rama y Entrega
 
 - Rama del spec: `239-centralizacion-wt`
+- Head SHA: `6c526f48adecb17871586b3949a1c2f6e5b94b52`
 - PR Final: https://github.com/robert-flo/HR-CLAVIS/pull/246
-- Estado del árbol de trabajo: limpio, worktrees temporales removidos.
+- Estado del árbol de trabajo: limpio, merge con `origin/master` resuelto sin conflictos, listo para revisión del RV.

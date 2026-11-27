@@ -75,13 +75,15 @@ robert-flo/pj-template @ template_ref        (reglas, fichas, skills, scripts, M
 └── rf-dotfiles/                       ← clon de un repo hijo (ignorado)
 ```
 
-Los clones de arriba son **para leer** (el PM y el contexto de los agentes). Nadie trabaja en ellos: todo worktree de trabajo sale de `ravn-git-bare-clone` (§6.4, ADR 0019 de pj-template):
+Los clones de arriba son **para leer** (el PM y el contexto de los agentes). Nadie trabaja en ellos: todo worktree de trabajo sale de `ravn-wt` (§6.4, ADR 0027 de pj-template):
 
 ```
-.bares/<repo>.git                  ← bare local del Home Repo (o /z/bare/<repo>.git)
-repos/<repo>/                      ← raíz de worktrees del Home Repo (o /z/repos/<repo>)
-repos/<repo>/<n>-<slug>/           ← worktree del WK u OS, rama issue/<n>-<slug>
-repos/<repo>/rv-<pr>/              ← worktree del RV para probar un PR (rama local rv/<pr>, sin subir)
+/z-home-repos/.bare/<repo>.git          ← bare puro centralizado (SSoT única)
+/z-home-repos/repos/<repo>/            ← árbol único de worktrees (lectura y desarrollo)
+/z-home-repos/repos/<repo>/<rama-base> ← lectura directa desde Home Repos sin clones locales
+/z-home-repos/repos/<repo>/specs/<n>-<slug>/ ← rama integradora de spec
+/z-home-repos/repos/<repo>/issue/<n>-<slug>/ ← worktree del WK u OS, rama issue/<n>-<slug>
+/z-home-repos/repos/<repo>/rv/<pr>/    ← worktree del RV para probar un PR (rama local rv/<pr>, sin subir)
 ```
 
 - **Tres capas.** pj-template es el molde (reglas y herramientas comunes a todos los Home Repos). HR-CLAVIS pone los datos del proyecto. Cada repo hijo pone su código y sus reglas propias.
@@ -275,9 +277,9 @@ pj-trio watch
 
 ### 6.4 `ravn-git-bare-clone` y sus atajos (`git-bare-clone`, `git-create-worktree`, `git-issue-worktree`, `ravn-wt`)
 
-- **Qué hace:** clona un repo en modo bare en `$BARE_HOME/<repo>.git` (por defecto `/z/bare`, o `.bares/` si se ejecuta dentro de un Home Repo) y arma worktrees en `$WORKTREES_HOME/<repo>/<rama>` (por defecto `/z/repos`, o `repos/` dentro de un Home Repo), dejando libre la rama por defecto para que varios agentes trabajen en paralelo sin colisionar. `sync` crea los worktrees que falten; `create <nombre>` y `issue <n> <slug>` crean un worktree nuevo.
-- **Versión actual:** `v0.2.1` (paquete Arch `ravn-git-bare-clone` en `[omarchy-personal]`, instalado en `/opt/ravn-git-bare-clone` con binarios en `/usr/bin`). Desde v0.2.1 cuenta con detección automática de Home Repos, tests automatizados de idempotencia en CI y el alias CLI `ravn-wt`.
-- **Con HR-CLAVIS:** **es la única forma permitida de crear worktrees** (ADR 0019 de pj-template; fleet ADR 0011: nunca `git worktree add` a mano). `ravn-git-bare-clone clone <dueño>/<repo>` es idempotente y prepara las estructuras canónicas. Si el issue vive en el repo del código, `git-issue-worktree -r /z/repos/<repo> -B <base> <n> <slug>`; si vive en HR-CLAVIS, `git-create-worktree -r /z/repos/<repo> -B <base> -b issue/<n>-<slug> -p '' <n>-<slug>`. Los dos dejan `/z/repos/<repo>/<n>-<slug>` en la rama `issue/<n>-<slug>`. Al terminar, `git -C /z/repos/<repo> worktree remove <ruta>`. Los clones dentro de HR-CLAVIS son solo para lectura; `./pj clean` nunca toca `/z/bare` ni `/z/repos`.
+- **Qué hace:** clona un repo en modo bare centralizado en `$BARE_HOME/<repo>.git` (por defecto `/z-home-repos/.bare/<repo>.git`) y arma worktrees en `$WORKTREES_HOME/<repo>/<rama>` (por defecto `/z-home-repos/repos/<repo>/<rama>`), dejando libre la rama por defecto para que varios agentes trabajen en paralelo sin colisionar (ADR 0027). Los Home Repos leen directamente desde `repos/<repo>/<rama-base>` sin clones redundantes. Invariante estricto `carpeta == rama`: `issue/<n>-<slug>`, `specs/<n>-<slug>`, `rv/<pr>`.
+- **Versión actual:** `v0.3.1` (paquete Arch `ravn-git-bare-clone` en `[omarchy-personal]`, instalado con binarios en `/usr/bin`). Cuenta con SSoT central en `/z-home-repos`, fetch remoto obligatorio previo en `create`, tests automatizados en CI y el alias primario `ravn-wt`.
+- **Con HR-CLAVIS:** **es la única forma permitida de crear worktrees** (ADR 0027 de pj-template; fleet ADR 0011: nunca `git worktree add` a mano). `ravn-wt clone <dueño>/<repo>` es idempotente y prepara las estructuras canónicas. La creación de worktrees se realiza con `ravn-wt create -r /z-home-repos/repos/<repo> -B <base> -b issue/<n>-<slug> -p '' issue/<n>-<slug>`. Al terminar, `git -C /z-home-repos/repos/<repo> worktree remove <ruta>`.
 
 ### 6.5 Las demás
 

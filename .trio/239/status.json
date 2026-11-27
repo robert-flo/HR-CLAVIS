@@ -1,12 +1,14 @@
 {
   "ticket": "239",
   "estado": "en-curso",
-  "paso": "wk",
-  "error": "Conflicto en .trio/239/ al mergear con master",
-  "timestamp": "2026-11-26T18:20:57-06:00",
+  "paso": "rv",
+  "error": "",
+  "timestamp": "2026-11-26T18:27:25-06:00",
   "session": "default",
   "heartbeat_at": "2026-11-26T18:20:57-06:00",
   "lease_expires_at": "2026-11-26T18:35:57-06:00",
   "pr": "https://github.com/robert-flo/HR-CLAVIS/pull/246",
-  "head": "60a8c0cae1fb7bf9fabff0a9c3bccf628a0d9237"
+  "head": "6c526f48adecb17871586b3949a1c2f6e5b94b52",
+  "owner": "rv-hr-clavis-239",
+  "branch": "239-centralizacion-wt"
 }
